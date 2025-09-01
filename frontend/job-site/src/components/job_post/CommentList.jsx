@@ -39,7 +39,7 @@ function CommentList(props) {
             <h1 className='text-md text-green-600 font-semibold mb-1'>ความคิดเห็น :</h1>
             {comments.length == 0 ? 
             <>
-                <h1 className='flex justify-center text-gray-400'>{msg}</h1>
+                <h1 className='flex justify-start text-gray-400 mx-2.5'>{msg}</h1>
             </>        
             :
             <>
