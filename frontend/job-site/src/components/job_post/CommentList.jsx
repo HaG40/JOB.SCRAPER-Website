@@ -36,7 +36,7 @@ function CommentList(props) {
     return (
         <>
         <div className=" px-5 flex flex-col">
-            <h1 className='text-md text-green-600 font-semibold mb-1'>ความคิดเห็น :</h1>
+            <h1 className='text-md text-orange-500 font-semibold mb-1'>ความคิดเห็น :</h1>
             {comments.length == 0 ? 
             <>
                 <h1 className='flex justify-start text-gray-400 mx-2.5'>{msg}</h1>

@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext, UserContext } from '../../App';
 import FavoriteButton from '../job_search/FavoriteButton';
 import UserBox from './UserBox';
-import ResumeAnalyzer from './ResumeAnalyzerAI';
 
 function UserPage() {
     const { isAuthenticated } = useContext(AuthContext);
@@ -38,14 +37,13 @@ function UserPage() {
     <>
     
         <div className='mx-auto max-w-3xl flex flex-col'>
-            <h1 className='text-2xl font-semibold flex items-center text-green-700 mt-5'>บัญชีผู้ใช้:</h1>
+            <h1 className='text-2xl font-semibold flex items-center text-orange-600 mt-5'>บัญชีผู้ใช้:</h1>
         </div>
         <UserBox />        
-        <ResumeAnalyzer />
       <div className="p-4 max-w-3xl mx-auto">
 
       <div className='flex flex-col'>
-        <h1 className='text-xl font-semibold flex items-center text-green-700'>งานที่สนใจ:</h1>
+        <h1 className='text-xl font-semibold flex items-center text-orange-600'>งานที่สนใจ:</h1>
       </div>
       <>
             <div className="space-y-4 mt-4">
@@ -56,7 +54,7 @@ function UserPage() {
                 >
 
                 <div className='flex flex-row justify-between'>
-                  <h3 className="text-lg font-bold text-green-600 flex justify-self-start mb-4">
+                  <h3 className="text-lg font-bold text-orange-500 flex justify-self-start mb-4">
                     {job.title}
                   </h3>
                   {isAuthenticated  ? 

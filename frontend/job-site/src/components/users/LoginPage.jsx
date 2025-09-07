@@ -40,7 +40,7 @@ function LoginPage() {
 
     return (
         <div className='p-4 max-w-xl mx-auto border rounded-2xl border-gray-300 justify-self-center px-10 pt-8 pb-12 mt-15 shadow'>
-            <h1 className="text-3xl font-bold mb-6 text-green-700">เข้าสู่ระบบ</h1>
+            <h1 className="text-3xl font-bold mb-6 text-orange-600">เข้าสู่ระบบ</h1>
             <form onSubmit={handleSubmit}>
                 <div className='justify-self-center flex flex-col'>
                     <div className='flex flex-row'>
@@ -80,7 +80,7 @@ function LoginPage() {
 
                     {errormsg != ""  ? <label className='text-red-500 '>** {errormsg}</label>:<></>}
 
-                    <button type='submit' className=' bg-green-600 text-white px-4 pr-5 pl-5 py-2 mt-5 rounded hover:bg-green-700 disabled:opacity-50 cursor-pointer shadow'>ล็อกอิน</button>
+                    <button type='submit' className=' bg-orange-500 text-white px-4 pr-5 pl-5 py-2 mt-5 rounded hover:bg-green-700 disabled:opacity-50 cursor-pointer shadow'>ล็อกอิน</button>
                     <Link to="/user/register" className='text-blue-600 flex justify-center mt-5 hover:underline cursor-pointer'>ไม่มีบัญชีผู้ใช้?</Link>
                 </div>
             </form>

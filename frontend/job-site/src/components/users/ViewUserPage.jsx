@@ -45,12 +45,12 @@ useEffect(() => {
   return (
     <>
       <div className='mx-auto max-w-xl flex flex-col'>
-            <h1 className='text-2xl font-semibold flex items-center text-green-700 mt-5'>บัญชีผู้ใช้:</h1>
+            <h1 className='text-2xl font-semibold flex items-center text-orange-600 mt-5'>บัญชีผู้ใช้:</h1>
       </div>
         <div className='mx-auto max-w-xl border rounded-xl p-8 mt-5 mb-8 border-gray-300 flex flex-col shadow'>
 
           <div className='flex flex-row justify-between mb-5'>
-              <h1 className='text-xl text-green-700 font-medium '>{targetUser.username}</h1>
+              <h1 className='text-xl text-orange-600 font-medium '>{targetUser.username}</h1>
               </div>
               <br />
               <div className='ml-4 flex flex-col space-y-2'>

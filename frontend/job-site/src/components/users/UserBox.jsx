@@ -56,7 +56,7 @@ function UserBox() {
         <div className='flex flex-row justify-between mb-5'>
             <div className='flex justify-start'>
                 <input 
-                className= 'text-xl text-green-700 font-medium userbox' 
+                className= 'text-xl text-orange-600 font-medium userbox' 
                 type="text" 
                 value={requestData.username}
                 onChange={e =>
@@ -144,10 +144,10 @@ function UserBox() {
         <>
         <div className='flex flex-row justify-between mb-5'>
             <div className='flex justify-start'>
-                <h1 className='text-xl text-green-700 font-medium '>{user.username}</h1>
+                <h1 className='text-xl text-orange-600 font-medium '>{user.username}</h1>
             </div>
             <br />
-                <button className=' text-gray-400 text-2xl px-3 cursor-pointer hover:text-green-700 disabled:opacity-50'
+                <button className=' text-gray-400 text-2xl px-3 cursor-pointer hover:text-orange-600 disabled:opacity-50'
                     onClick={handleEdit}
                 ><FaEdit / ></button>
             </div>

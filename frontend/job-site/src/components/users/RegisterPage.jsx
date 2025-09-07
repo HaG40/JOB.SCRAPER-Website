@@ -48,7 +48,7 @@ function RegisterPage() {
 
     return (
         <div className='p-4 max-w-xl mx-auto border rounded-2xl border-gray-300 justify-self-center px-10 pt-8 pb-12 my-15 shadow'>
-            <h1 className="text-3xl font-bold mb-6 text-green-700">ลงทะเบียน</h1>
+            <h1 className="text-3xl font-bold mb-6 text-orange-600">ลงทะเบียน</h1>
             <form onSubmit={handleSubmit}>
                 <div className='justify-self-center flex flex-col'>
                     <div className='flex flex-row'>
@@ -141,7 +141,7 @@ function RegisterPage() {
                     {password !== '' && confirmPassword !== '' && password !== confirmPassword ? <label className='text-red-500 '>** โปรดใส่รหัสผ่านให้ตรงกัน</label>:<></>}
                     
 
-                    <button type='submit' className=' bg-green-600 text-white px-4 pr-5 pl-5 py-2 mt-5 rounded hover:bg-green-700 disabled:opacity-50 cursor-pointer'>ลงทะเบียน</button>
+                    <button type='submit' className=' bg-orange-500 text-white px-4 pr-5 pl-5 py-2 mt-5 rounded hover:bg-orange-600 disabled:opacity-50 cursor-pointer'>ลงทะเบียน</button>
                     <Link to="/user/login" className='text-blue-600 flex justify-center mt-5 hover:underline cursor-pointer'>มีบัญชีผู้ใช้อยู่แล้ว</Link>
                 </div>
             </form>

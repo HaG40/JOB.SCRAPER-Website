@@ -61,7 +61,7 @@ function FindJob() {
     return (
         <>
             <div className="flex flex-col w-150">
-                <h1 className="text-green-600 font-semibold text-2xl mx-4 border-b-1 border-gray-300 pb-3">หางาน:</h1>
+                <h1 className="text-orange-500 font-semibold text-2xl mx-4 border-b-1 border-gray-300 pb-3">หางาน:</h1>
                     <div className="space-y-1.5 mt-4">
                         {posts.map((post, index) => (
                             <>
@@ -74,11 +74,11 @@ function FindJob() {
                                 <Link 
                                     to='/post/view'
                                     state={{ post: post }}
-                                    className='text-lg text-green-600 font-bold mb-4'
+                                    className='text-lg text-orange-500 font-bold mb-4'
                                 >
                                     {post.title}
                                 </Link>
-                                <label className='flex justify-end text-gray-400'>{FormatDate(post.CreatedAt)}</label>
+                                <label className='flex justify-end text-gray-400'>{TimeAgo(post.CreatedAt)}</label>
                             </div>
                             <div className='mx-4 flex flex-col'>
                                 <textarea className='text-gray-500 mb-2 post-text' defaultValue={post.description} readOnly></textarea>
