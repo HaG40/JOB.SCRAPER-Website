@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+
+.userbox:focus {
+  outline: none;
+  
+}
+
+textarea.post-text {
+  field-sizing: content;
+  outline: none;
+  resize: none;
+}
