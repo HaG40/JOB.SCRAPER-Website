@@ -15,6 +15,8 @@ type User struct {
 	DateOfBirth    string           `json:"date_of_birth" gorm:"not null"`
 	Email          string           `json:"email" gorm:"uniqueIndex;not null"`
 	Password       string           `json:"password" gorm:"not null"`
+	InterestedJob  string           `json:"interested_job"`
+	CV             []byte           `json:"cv" gorm:"type:bytea"`
 	PreferenceJobs []PreferenceJobs `gorm:"foreignKey:UserID"`
 	CVJobs         []CVJobs         `gorm:"foreignKey:UserID"`
 	FavoriteJobs   []FavoriteJobs   `gorm:"foreignKey:UserID"`
