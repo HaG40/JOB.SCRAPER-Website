@@ -18,6 +18,10 @@ func SetUpRoutes() {
 	http.Handle("/api/jobs/preferences/delete", middleware.JobsMiddleware(http.HandlerFunc(controller.DeletePreferenceJobHandler)))
 	http.Handle("/api/jobs/preferences", middleware.JobsMiddleware(http.HandlerFunc(controller.GetPreferenceJobsHandler)))
 
+	http.Handle("/api/jobs/cv/add", middleware.JobsMiddleware(http.HandlerFunc(controller.AddCVJobHandler)))
+	http.Handle("/api/jobs/cv/delete", middleware.JobsMiddleware(http.HandlerFunc(controller.DeleteCVJobHandler)))
+	http.Handle("/api/jobs/cv", middleware.JobsMiddleware(http.HandlerFunc(controller.GetCVJobsHandler)))
+
 	// Job Post Route
 	http.Handle("/api/jobs/post/find", middleware.JobsMiddleware(http.HandlerFunc(controller.PostFindJob)))
 	http.Handle("/api/jobs/post/recruit", middleware.JobsMiddleware(http.HandlerFunc(controller.PostRecruitJob)))
