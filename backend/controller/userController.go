@@ -212,7 +212,6 @@ func User(w http.ResponseWriter, r *http.Request) {
 		LastName    string `json:"last_name"`
 		DateOfBirth string `json:"date_of_birth"`
 		Email       string `json:"email"`
-		Description string `json:"description"`
 	}
 
 	if DB == nil {
@@ -241,7 +240,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var profile Profile
-		profile.UserId, profile.Username, profile.FirstName, profile.LastName, profile.DateOfBirth, profile.Email, profile.Description = user.ID, user.Username, user.FirstName, user.LastName, user.DateOfBirth, user.Email, user.Description
+		profile.UserId, profile.Username, profile.FirstName, profile.LastName, profile.DateOfBirth, profile.Email = user.ID, user.Username, user.FirstName, user.LastName, user.DateOfBirth, user.Email
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(profile)
@@ -266,7 +265,6 @@ func ViewUser(w http.ResponseWriter, r *http.Request) {
 		LastName    string `json:"last_name"`
 		DateOfBirth string `json:"date_of_birth"`
 		Email       string `json:"email"`
-		Description string `json:"description"`
 	}
 
 	if r.Method == http.MethodGet {
@@ -284,7 +282,7 @@ func ViewUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var profile Profile
-		profile.UserId, profile.Username, profile.FirstName, profile.LastName, profile.DateOfBirth, profile.Email, profile.Description = user.ID, user.Username, user.FirstName, user.LastName, user.DateOfBirth, user.Email, user.Description
+		profile.UserId, profile.Username, profile.FirstName, profile.LastName, profile.DateOfBirth, profile.Email = user.ID, user.Username, user.FirstName, user.LastName, user.DateOfBirth, user.Email
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(profile)
@@ -359,7 +357,6 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 		existingUser.LastName = updatedUser.LastName
 		existingUser.Email = updatedUser.Email
 		existingUser.DateOfBirth = updatedUser.DateOfBirth
-		existingUser.Description = updatedUser.Description
 
 		if err := DB.Save(&existingUser).Error; err != nil {
 			http.Error(w, "เกิดข้อผิดพลาดในการอัปเดตผู้ใช้: "+err.Error(), http.StatusInternalServerError)

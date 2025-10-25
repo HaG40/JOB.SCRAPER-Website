@@ -3,7 +3,6 @@ import { useContext, useEffect, useState } from "react";
 import { AuthContext, UserContext } from "../../App";
 
 function JobReccomendByUserPreferences() {
-  const [preferences, setPreferences] = useState(["frontend", "remote"]); // ตัวอย่าง preferences
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated } = useContext(AuthContext);
@@ -12,10 +11,6 @@ function JobReccomendByUserPreferences() {
   const fetchJobRecommendations = async () => {
     setIsLoading(true);
     document.body.style.cursor = "progress";
-
-    // สร้าง query string จาก preferences
-    const params = new URLSearchParams();
-    preferences.forEach((pref) => params.append("preferences", pref));
 
     try {
       const res = await fetch(`http://localhost:8888/api/jobs/preferences?userId=${user.id}`);
@@ -47,7 +42,7 @@ function JobReccomendByUserPreferences() {
   }, []);
 
   return (
-    <div className="p-4">
+    <div className="p-2 w-3xs">
       <h1 className="text-lg font-bold mb-4 text-orange-500">งานที่คุณอาจจะสนใจ</h1>
 
       {isLoading && <p>กำลังโหลด...</p>}
@@ -72,7 +67,7 @@ function JobReccomendByUserPreferences() {
             </li>
           ))
         ) : (
-          !isLoading && <p className="text-gray-500">ไม่พบนำเสนอในตอนนี้</p>
+          !isLoading && <p className="text-gray-500">ไม่มีข้อมูลในขณะนี้</p>
         )}
       </ul>
     </div>

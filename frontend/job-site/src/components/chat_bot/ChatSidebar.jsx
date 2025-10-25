@@ -64,7 +64,7 @@ function ChatSidebar() {
     <>
       <div
         className={`fixed top-0 bottom-0 right-0 w-[600px] bg-yellow-50 shadow-lg border-l transition-transform duration-300 z-50 flex flex-col ${
-          isOpen ? "translate-x-full" : "translate-x-0"
+          isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex justify-between items-center p-4 bg-orange-400 text-white">
@@ -156,10 +156,10 @@ function ChatSidebar() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`fixed top-[120px] right-0 z-50 bg-orange-500 text-white px-3 py-6 rounded-l-lg shadow-lg duration-300 hover:bg-orange-600 transition-all ${
-          !isOpen ? "translate-x-[-600px]" : "translate-x-0"
+          isOpen ? "translate-x-[-600px]" : "translate-x-0"
         }`}
       >
-        {!isOpen ? (
+        {isOpen ? (
           <FaTimes className="text-2xl" />
         ) : (
           <FaRobot className="text-2xl" />

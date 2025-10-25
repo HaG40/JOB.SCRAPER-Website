@@ -55,7 +55,7 @@ const handleSidebarClick =(kw) => {
   return (
     <div className="flex flex-row justify-start"> 
       <SideBar/>
-      <div className="flex flex-row justify-center w-1/2 ml-75"> 
+      <div className="flex flex-row justify-center w-1/2 mx-auto"> 
       <div className="p-4 max-w-xl mx-auto">
 
       <h1 className="text-2xl font-bold mb-4 text-orange-500">Job Search</h1>
@@ -205,7 +205,7 @@ const handleSidebarClick =(kw) => {
       </div>
 
     </div>
-      <div className="mt-10 flex flex-row justify-center gap-20">
+      <div className="mt-15 ml-10 flex flex-row justify-center ">
             <JobReccomendByUserPreferences/>
             <JobReccomendByUserCV/>
       </div>
