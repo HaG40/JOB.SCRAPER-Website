@@ -205,10 +205,14 @@ const handleSidebarClick =(kw) => {
       </div>
 
     </div>
+    {isAuthenticated ? 
       <div className="mt-15 ml-10 flex flex-row justify-center ">
-            <JobReccomendByUserPreferences/>
-            <JobReccomendByUserCV/>
+        <JobReccomendByUserPreferences/>
+        <JobReccomendByUserCV/>
       </div>
+    :
+      <></>
+    }
       </div>
     </div>
   );

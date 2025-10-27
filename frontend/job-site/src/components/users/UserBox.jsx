@@ -6,7 +6,6 @@ import { toast } from 'react-toastify';
 
 function UserBox() {
 
-    const { isAuthenticated } = useContext(AuthContext);
     const { user } = useContext(UserContext);
     const fullName = `${user.firstName} ${user.lastName}`;
     const [editMode, setEditMode] = useState(false)   
@@ -141,6 +140,8 @@ function UserBox() {
                 <label><b>ชื่อ</b> : {fullName}</label>
                 <label><b>อายุ</b> : {user.age}</label>
                 <label><b>อีเมลล์</b> : {user.email}</label>
+                <label><b>งานที่สนใจ</b> : {user.interested_job}</label>
+                <label><b>เรซูเม่</b> : {user.cv}</label>
             </div>
         </>
         }

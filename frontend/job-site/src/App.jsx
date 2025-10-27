@@ -40,7 +40,8 @@ function App() {
             dob: data.date_of_birth,
             age: calculateAge(data.date_of_birth),
             email: data.email,
-            description: data.description,
+            interested_job: data.interested_job,
+            cv: data.cv,
           });
         } else {
           console.log("Failed fetching user data");
@@ -101,8 +102,6 @@ function App() {
             <Route path="/user/register" element={<RegisterPage />} />
             <Route path="/user" element={<UserPage />} />
             <Route path='/user/view' element={<ViewUserPage/>}/>
-            <Route path='/post/create' element={<CreatePost/>}/>
-            <Route path='/post/view' element={<ViewPost/>}/>
             <Route path="/user/logout" element={<Logout />} />
           </Routes>
 

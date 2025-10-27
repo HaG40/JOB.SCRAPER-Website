@@ -1,11 +1,9 @@
-import React from "react";
 import { useContext, useEffect, useState } from "react";
-import { AuthContext, UserContext } from "../../App";
+import { UserContext } from "../../App";
 
 function JobReccomendByUserCV() {
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { isAuthenticated } = useContext(AuthContext);
   const { user } = useContext(UserContext);
 
   const fetchJobRecommendations = async () => {

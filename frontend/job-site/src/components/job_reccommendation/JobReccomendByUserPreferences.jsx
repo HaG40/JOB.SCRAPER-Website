@@ -1,11 +1,9 @@
-import React from "react";
 import { useContext, useEffect, useState } from "react";
-import { AuthContext, UserContext } from "../../App";
+import { UserContext } from "../../App";
 
 function JobReccomendByUserPreferences() {
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { isAuthenticated } = useContext(AuthContext);
   const { user } = useContext(UserContext);
 
   const fetchJobRecommendations = async () => {
@@ -42,6 +40,7 @@ function JobReccomendByUserPreferences() {
   }, []);
 
   return (
+    
     <div className="p-2 w-3xs">
       <h1 className="text-lg font-bold mb-4 text-orange-500">งานที่คุณอาจจะสนใจ</h1>
 
