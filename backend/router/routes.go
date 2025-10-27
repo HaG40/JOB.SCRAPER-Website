@@ -30,6 +30,7 @@ func SetUpRoutes() {
 	http.Handle("/api/jobs/get/recruit", middleware.JobsMiddleware(http.HandlerFunc(controller.GetRecruitJob)))
 	http.Handle("/api/jobs/get/contract", middleware.JobsMiddleware(http.HandlerFunc(controller.GetContractJob)))
 	http.Handle("/api/user/view", middleware.JobsMiddleware(http.HandlerFunc(http.HandlerFunc(controller.ViewUser))))
+	http.Handle("/api/user/cv", middleware.JobsMiddleware(http.HandlerFunc(http.HandlerFunc(controller.GetUserCV))))
 
 	// Comments On Post
 	http.Handle("/api/jobs/get/comments", middleware.JobsMiddleware(http.HandlerFunc(controller.GetComments)))

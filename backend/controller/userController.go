@@ -331,45 +331,79 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPut {
-		var updatedUser models.User
-		if err := json.NewDecoder(r.Body).Decode(&updatedUser); err != nil {
-			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		if updatedUser.Username == "" || updatedUser.FirstName == "" || updatedUser.LastName == "" || updatedUser.Email == "" || updatedUser.DateOfBirth == "" {
-			http.Error(w, "โปรดกรอกข้อมูลที่จำเป็นให้ครบถ้วน", http.StatusBadRequest)
-			return
-		}
-
-		if utils.HasEmptyOrSpace(updatedUser.Username) || utils.HasEmptyOrSpace(updatedUser.Email) || utils.HasEmptyOrSpace(updatedUser.FirstName) || utils.HasEmptyOrSpace(updatedUser.LastName) || utils.HasEmptyOrSpace(updatedUser.DateOfBirth) {
-			http.Error(w, "โปรดกรอกข้อมูลที่จำเป็นโดยที่ไม่มีการเว้นช่องว่าง", http.StatusBadRequest)
-			return
-		}
-
-		var existingUser models.User
-		if err := DB.First(&existingUser, updatedUser.ID).Error; err != nil {
-			http.Error(w, "ไม่พบผู้ใช้งาน", http.StatusNotFound)
-			return
-		}
-
-		existingUser.Username = updatedUser.Username
-		existingUser.FirstName = updatedUser.FirstName
-		existingUser.LastName = updatedUser.LastName
-		existingUser.Email = updatedUser.Email
-		existingUser.DateOfBirth = updatedUser.DateOfBirth
-
-		if err := DB.Save(&existingUser).Error; err != nil {
-			http.Error(w, "เกิดข้อผิดพลาดในการอัปเดตผู้ใช้: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(existingUser)
-	} else {
+	if r.Method != http.MethodPut {
 		http.Error(w, "Only PUT allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	var updatedUser struct {
+		ID            uint   `json:"ID"`
+		Username      string `json:"username"`
+		FirstName     string `json:"firstName"`
+		LastName      string `json:"lastName"`
+		DateOfBirth   string `json:"date_of_birth"`
+		Email         string `json:"email"`
+		InterestedJob string `json:"interested_job"` // "job1,job2,job3"
+		CV            []byte `json:"cv"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&updatedUser); err != nil {
+		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validation
+	if updatedUser.Username == "" || updatedUser.FirstName == "" || updatedUser.LastName == "" || updatedUser.Email == "" || updatedUser.DateOfBirth == "" {
+		http.Error(w, "โปรดกรอกข้อมูลที่จำเป็นให้ครบถ้วน", http.StatusBadRequest)
+		return
+	}
+
+	var existingUser models.User
+	if err := DB.First(&existingUser, updatedUser.ID).Error; err != nil {
+		http.Error(w, "ไม่พบผู้ใช้งาน", http.StatusNotFound)
+		return
+	}
+
+	existingUser.Username = updatedUser.Username
+	existingUser.FirstName = updatedUser.FirstName
+	existingUser.LastName = updatedUser.LastName
+	existingUser.Email = updatedUser.Email
+	existingUser.DateOfBirth = updatedUser.DateOfBirth
+	existingUser.InterestedJob = updatedUser.InterestedJob
+	if len(updatedUser.CV) > 0 {
+		existingUser.CV = updatedUser.CV
+	}
+
+	if err := DB.Save(&existingUser).Error; err != nil {
+		http.Error(w, "เกิดข้อผิดพลาดในการอัปเดตผู้ใช้: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(existingUser)
+}
+
+func GetUserCV(w http.ResponseWriter, r *http.Request) {
+	userID := r.URL.Query().Get("id")
+	if userID == "" {
+		http.Error(w, "Missing user ID", http.StatusBadRequest)
+		return
+	}
+
+	var user models.User
+	if err := DB.First(&user, userID).Error; err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	if len(user.CV) == 0 {
+		http.Error(w, "No CV uploaded", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", `inline; filename="cv.pdf"`)
+	w.WriteHeader(http.StatusOK)
+	w.Write(user.CV)
 }
