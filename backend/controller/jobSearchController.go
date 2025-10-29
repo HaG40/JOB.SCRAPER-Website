@@ -95,7 +95,7 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 			data = append(data, jobbkkData...)
 			data = append(data, jobthaiData...)
 			data = append(data, jobthData...)
-			shuffle(data)
+			// shuffle(data)
 		}
 		if contains(source, "jobbkk") {
 			data = append(data, jobbkkData...)
@@ -118,6 +118,28 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+	}
+}
+
+func JobSearchMultipleKeys(w http.ResponseWriter, r *http.Request) {
+	if DB == nil {
+		db := database.Connect()
+		DB = db
+	}
+
+	if r.Method == http.MethodGet {
+		w.Header().Set("Content-type", "application/json")
+
+		keyword := r.URL.Query().Get("keyword")
+		
+		var jobbkkData, jobthaiData, jobthData [5]scrapers.JobCard
+		var scrapeErr int
+		}
+		scraperFuncs := []func(string, int, bool) ([5]scrapers.JobCard, error){
+			scrapers.ScrapingJobbkk,
+			scrapers.ScrapingJobthai,
+			scrapers.ScrapingJobTH,
+		}
 	}
 }
 

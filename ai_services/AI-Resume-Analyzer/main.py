@@ -250,3 +250,44 @@ async def get_interview_log():
     return JSONResponse({
         "interview_history": interview_history
     })
+
+@app.post("/recommend/cv")
+async def analyze_resume(resume_file: UploadFile = File(...)):
+
+    resume_text = extract_text(resume_file)
+    conversation_history.append({
+        "role": "system",
+        "content": f"นี่คือเรซูเม่ที่อัปโหลดล่าสุดของผู้ใช้:\n{resume_cache[:1500]}"
+    })
+
+    prompt = f"""
+คุณคือ AI Resume Analyzer ช่วยวิเคราะห์เรซูเม่ต่อไปนี้:
+
+📄 **เรซูเม่ผู้สมัคร:**
+{resume_text}
+
+📝 **คำสั่ง:**
+- แนะนำงานที่เหมาะสมกับผู้สมัครตามเรซูเม่ที่ให้มา จำนวน 5 ตำแหน่งงาน
+- โดยใช้รูปแบบดังนี้: Job1,Job2,Job3,Job4,Job5
+"""
+
+    answer = client.chat.completions.create(
+        model="openai/gpt-oss-120b",
+        messages=[
+            {"role": "system", "content": "คุณคือ HR AI Analyzer"},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2,
+        max_tokens=800,
+    )
+
+    response = answer.choices[0].message.content
+
+    jobs = response.split(',')
+    if len(jobs) >= 5:
+        response = ','.join(jobs[:5])
+
+    return JSONResponse({
+        "reply": response,
+        "jobs": jobs,
+    })

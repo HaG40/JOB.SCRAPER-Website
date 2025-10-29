@@ -4,6 +4,7 @@ import { FaEdit } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import CVViewer from './CVViewer';
 
+
 function UserBox() {
     const { user } = useContext(UserContext);
     const fullName = `${user.firstName} ${user.lastName}`;

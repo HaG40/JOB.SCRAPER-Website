@@ -261,12 +261,14 @@ func ViewUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	type Profile struct {
-		UserId      uint   `json:"user_id"`
-		Username    string `json:"username"`
-		FirstName   string `json:"first_name"`
-		LastName    string `json:"last_name"`
-		DateOfBirth string `json:"date_of_birth"`
-		Email       string `json:"email"`
+		UserId        uint   `json:"user_id"`
+		Username      string `json:"username"`
+		FirstName     string `json:"first_name"`
+		LastName      string `json:"last_name"`
+		DateOfBirth   string `json:"date_of_birth"`
+		Email         string `json:"email"`
+		InterestedJob string `json:"interested_job"`
+		CV            []byte `json:"cv"`
 	}
 
 	if r.Method == http.MethodGet {
@@ -284,7 +286,7 @@ func ViewUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var profile Profile
-		profile.UserId, profile.Username, profile.FirstName, profile.LastName, profile.DateOfBirth, profile.Email = user.ID, user.Username, user.FirstName, user.LastName, user.DateOfBirth, user.Email
+		profile.UserId, profile.Username, profile.FirstName, profile.LastName, profile.DateOfBirth, profile.Email, profile.InterestedJob, profile.CV = user.ID, user.Username, user.FirstName, user.LastName, user.DateOfBirth, user.Email, user.InterestedJob, user.CV
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(profile)

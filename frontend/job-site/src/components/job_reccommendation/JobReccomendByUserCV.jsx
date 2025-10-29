@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../App";
+import GetCVJobs from "./GetCVJobs";
 
 function JobReccomendByUserCV() {
   const [jobs, setJobs] = useState([]);
@@ -44,6 +45,9 @@ function JobReccomendByUserCV() {
       <h1 className="text-lg font-bold mb-4 text-orange-500">งานที่เหมาะกับคุณ</h1>
 
       {isLoading && <p>กำลังโหลด...</p>}
+
+      {user && user.cv && <GetCVJobs/>}
+      
 
       <ul className="space-y-2">
         {jobs.length > 0 ? (
