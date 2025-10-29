@@ -89,7 +89,6 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 
-		// collect data
 		var data []scrapers.JobCard
 		if contains(source, "all") {
 			data = append(data, jobbkkData...)
@@ -121,7 +120,7 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func JobSearchMultipleKeys(w http.ResponseWriter, r *http.Request) {
+func JobSearchForRecommendation(w http.ResponseWriter, r *http.Request) {
 	if DB == nil {
 		db := database.Connect()
 		DB = db
@@ -131,15 +130,56 @@ func JobSearchMultipleKeys(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-type", "application/json")
 
 		keyword := r.URL.Query().Get("keyword")
-		
-		var jobbkkData, jobthaiData, jobthData [5]scrapers.JobCard
+
+		var jobbkkData, jobthaiData, jobthData []scrapers.JobCard
 		var scrapeErr int
-		}
-		scraperFuncs := []func(string, int, bool) ([5]scrapers.JobCard, error){
+
+		scraperFuncs := []func(string, int, bool) ([]scrapers.JobCard, error){
 			scrapers.ScrapingJobbkk,
 			scrapers.ScrapingJobthai,
 			scrapers.ScrapingJobTH,
 		}
+
+		var jobs []scrapers.JobCard
+		var err error
+		for i, scrape := range scraperFuncs {
+			jobs, err = scrape(keyword, 1, false)
+			if err != nil {
+				log.Printf("Error scraping source #%d: %v", i+1, err)
+				scrapeErr++
+				continue
+			}
+			if i == 0 {
+				jobbkkData = append(jobbkkData, jobs...)
+			}
+			if i == 1 {
+				jobthaiData = append(jobthaiData, jobs...)
+			}
+			if i == 2 {
+				jobthData = append(jobthData, jobs...)
+			}
+		}
+
+		if scrapeErr >= len(scraperFuncs) {
+			w.WriteHeader(http.StatusNotFound)
+		}
+
+		var data []scrapers.JobCard
+		data = append(data, jobbkkData[0])
+		data = append(data, jobthaiData[0])
+		data = append(data, jobthData[0])
+
+		if len(data) == 0 {
+			w.Write([]byte("No data available"))
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(data)
+
+	} else {
+		http.Error(w, "Only GET allowed", http.StatusMethodNotAllowed)
+		return
 	}
 }
 

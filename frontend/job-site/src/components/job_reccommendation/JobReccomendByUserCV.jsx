@@ -69,7 +69,8 @@ function JobReccomendByUserCV() {
             </li>
           ))
         ) : (
-          !isLoading && <p className="text-gray-500">ไม่มีข้อมูลในขณะนี้</p>
+          // !isLoading && <p className="text-gray-500">ไม่มีข้อมูลในขณะนี้</p>
+          <></>
         )}
       </ul>
     </div>

@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../App";
+import GetPreferenceJobs from "./GetPreferenceJobs";
 
 function JobReccomendByUserPreferences() {
   const [jobs, setJobs] = useState([]);
@@ -46,6 +47,8 @@ function JobReccomendByUserPreferences() {
 
       {isLoading && <p>กำลังโหลด...</p>}
 
+      {user && user.cv && <GetPreferenceJobs/>}
+
       <ul className="space-y-2">
         {jobs.length > 0 ? (
           jobs.map((job, i) => (
@@ -66,7 +69,8 @@ function JobReccomendByUserPreferences() {
             </li>
           ))
         ) : (
-          !isLoading && <p className="text-gray-500">ไม่มีข้อมูลในขณะนี้</p>
+          // !isLoading && <p className="text-gray-500">ไม่มีข้อมูลในขณะนี้</p>
+          <></>
         )}
       </ul>
     </div>

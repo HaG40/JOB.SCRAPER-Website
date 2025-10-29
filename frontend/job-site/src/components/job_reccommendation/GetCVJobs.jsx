@@ -1,14 +1,19 @@
-import { useContext,useEffect,useState } from "react";
+import { useContext,useEffect,useState, createContext } from "react";
 import { UserContext } from "../../App";
+
+export const CVRecommendContext = createContext();
 
 function SendCVToPython() {
   const { user } = useContext(UserContext);
-  const [cVRecommendations, setCVRecommendations] = useState(null);
+  const [cVRecommendations, setCVRecommendations] = useState([]);
 
     useEffect(() => {
         if (user && user.cv){
             sendCV();
+                    
+        console.log(cVRecommendations)
         }
+
     }, [user.id]);
 
   const sendCV = async () => {
@@ -35,11 +40,24 @@ function SendCVToPython() {
 
       const data = await res.json();
       console.log("✅ Response:", data);
-      setCVRecommendations(data);
+      setCVRecommendations(data.jobs);
     } catch (err) {
       console.error("❌ ส่ง PDF ไม่สำเร็จ:", err);
     }
   };
+
+  return (
+    <>
+    <CVRecommendContext.Provider value={cVRecommendations}>
+      <div className="flex flex-col gap-4"> 
+        <button className="shadow bg-orange-600 rounded cursor-pointer py-1 px-2 text-white">{cVRecommendations[0]}</button>
+        <button className="shadow bg-orange-600 rounded cursor-pointer py-1 px-2 text-white">{cVRecommendations[1]}</button>
+        <button className="shadow bg-orange-600 rounded cursor-pointer py-1 px-2 text-white">{cVRecommendations[2]}</button>
+      </div>
+
+    </CVRecommendContext.Provider>
+    </>  
+  )
 }
 
 export default SendCVToPython;
