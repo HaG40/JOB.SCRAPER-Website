@@ -17,7 +17,7 @@ function UserPage() {
             credentials: "include"
         })
         const data = await res.json();
-            setFavJobs(data)
+            setFavJobs(data.reverse())
         } catch (err) {
         console.error("Failed to fetch favorite jobs", err);
         }

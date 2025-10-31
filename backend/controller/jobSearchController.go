@@ -55,13 +55,12 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 			bkkOnlyBool = false
 		}
 
-		var jobbkkData, jobthaiData, jobthData []scrapers.JobCard
+		var jobbkkData, jobthaiData []scrapers.JobCard
 		var scrapeErr int
 
 		scraperFuncs := []func(string, int, bool) ([]scrapers.JobCard, error){
 			scrapers.ScrapingJobbkk,
 			scrapers.ScrapingJobthai,
-			scrapers.ScrapingJobTH,
 		}
 
 		var jobs []scrapers.JobCard
@@ -80,9 +79,6 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 			if i == 1 {
 				jobthaiData = append(jobthaiData, jobs...)
 			}
-			if i == 2 {
-				jobthData = append(jobthData, jobs...)
-			}
 		}
 
 		if scrapeErr >= len(scraperFuncs) {
@@ -93,7 +89,7 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 		if contains(source, "all") {
 			data = append(data, jobbkkData...)
 			data = append(data, jobthaiData...)
-			data = append(data, jobthData...)
+
 			// shuffle(data)
 		}
 		if contains(source, "jobbkk") {
@@ -101,9 +97,6 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if contains(source, "jobthai") {
 			data = append(data, jobthaiData...)
-		}
-		if contains(source, "jobth") {
-			data = append(data, jobthData...)
 		}
 
 		// convert to json
@@ -131,32 +124,31 @@ func JobSearchForRecommendation(w http.ResponseWriter, r *http.Request) {
 
 		keyword := r.URL.Query().Get("keyword")
 
-		var jobbkkData, jobthaiData, jobthData []scrapers.JobCard
+		var jobbkkData, jobthaiData scrapers.JobCard
 		var scrapeErr int
 
-		scraperFuncs := []func(string, int, bool) ([]scrapers.JobCard, error){
-			scrapers.ScrapingJobbkk,
-			scrapers.ScrapingJobthai,
-			scrapers.ScrapingJobTH,
+		scraperFuncs := []func(string, int) (scrapers.JobCard, error){
+			scrapers.SingleScrapingJobbkk,
+			scrapers.SingleScrapingJobthai,
 		}
 
-		var jobs []scrapers.JobCard
+		var jobs scrapers.JobCard
 		var err error
+		min := 1
+		max := 5
 		for i, scrape := range scraperFuncs {
-			jobs, err = scrape(keyword, 1, false)
+			randomNumber := rand.Intn(max-min) + min
+			jobs, err = scrape(keyword, randomNumber)
 			if err != nil {
 				log.Printf("Error scraping source #%d: %v", i+1, err)
 				scrapeErr++
 				continue
 			}
 			if i == 0 {
-				jobbkkData = append(jobbkkData, jobs...)
+				jobbkkData = jobs
 			}
 			if i == 1 {
-				jobthaiData = append(jobthaiData, jobs...)
-			}
-			if i == 2 {
-				jobthData = append(jobthData, jobs...)
+				jobthaiData = jobs
 			}
 		}
 
@@ -165,9 +157,8 @@ func JobSearchForRecommendation(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var data []scrapers.JobCard
-		data = append(data, jobbkkData[0])
-		data = append(data, jobthaiData[0])
-		data = append(data, jobthData[0])
+		data = append(data, jobbkkData)
+		data = append(data, jobthaiData)
 
 		if len(data) == 0 {
 			w.Write([]byte("No data available"))

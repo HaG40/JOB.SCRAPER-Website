@@ -129,6 +129,7 @@ async def analyze_resume(resume_file: UploadFile = File(...)):
     report = answer.choices[0].message.content
     scores = extract_scores(report)
     avg_score = round(sum(scores) / len(scores), 2) if scores else None
+    print(resume_text)
 
     return JSONResponse({
         "resume_text": resume_text[:500],

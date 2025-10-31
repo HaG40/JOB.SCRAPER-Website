@@ -91,30 +91,17 @@ func ScrapingJobTH(keywrd string, page int, onlyBKK bool) ([]JobCard, error) {
 	return jobthCards, nil
 }
 
-func SingleScrapingJobTH(keywrd string, index int, page int, onlyBKK bool) (JobCard, error) {
+func SingleScrapingJobTH(keywrd string, index int) (JobCard, error) {
 
 	if jobthCards != nil {
 		jobthCards = nil
 	}
 
-	keywrd = strings.Join((strings.Split(strings.TrimSpace(keywrd), " ")), "+")
-	encodedKeywrd := url.QueryEscape(keywrd)
-	pageStr := strconv.Itoa(page)
+	keywrd = strings.ReplaceAll(keywrd, " ", "+")
+	// keywrd = strings.Join((strings.Split(strings.TrimSpace(keywrd), " ")), "+")
+	// encodedKeywrd := url.QueryEscape(keywrd)
 
-	var scrapeURL string
-	if keywrd == "" {
-		if onlyBKK {
-			scrapeURL = "https://www.jobth.com/searchjob2.php?city=city00&page=" + pageStr
-		} else {
-			scrapeURL = "https://www.jobth.com/searchjob2.php?page=" + pageStr
-		}
-	} else {
-		if onlyBKK {
-			scrapeURL = "https://www.jobth.com/searchjob2.php?city=city00&keyword=" + encodedKeywrd + "&page=" + strconv.Itoa(page)
-		} else {
-			scrapeURL = "https://www.jobth.com/searchjob2.php?keyword=" + encodedKeywrd + "&page=" + strconv.Itoa(page)
-		}
-	}
+	scrapeURL := "https://www.jobth.com/searchjob2.php?keyword=" + keywrd + "&page=1"
 
 	c := colly.NewCollector(colly.AllowedDomains("www.jobth.com", "jobth.com"))
 

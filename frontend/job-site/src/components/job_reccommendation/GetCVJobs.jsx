@@ -1,22 +1,24 @@
-import { useContext,useEffect,useState, createContext } from "react";
+import { useContext,useEffect,useState } from "react";
 import { UserContext } from "../../App";
-
-export const CVRecommendContext = createContext();
+import GetRecommendJob from "./GetRecomendJob";
 
 function SendCVToPython() {
   const { user } = useContext(UserContext);
   const [cVRecommendations, setCVRecommendations] = useState([]);
+  const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
         if (user && user.cv){
+
             sendCV();
                     
-        console.log(cVRecommendations)
+        // console.log(cVRecommendations)
         }
 
     }, [user.id]);
 
   const sendCV = async () => {
+    setIsLoading(true)
     try {
       const base64 = user.cv;
 
@@ -39,23 +41,36 @@ function SendCVToPython() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const data = await res.json();
-      console.log("✅ Response:", data);
+      // console.log("✅ Response:", data);
       setCVRecommendations(data.jobs);
     } catch (err) {
       console.error("❌ ส่ง PDF ไม่สำเร็จ:", err);
+    }finally{
+        setIsLoading(false)
     }
   };
 
   return (
     <>
-    <CVRecommendContext.Provider value={cVRecommendations}>
-      <div className="flex flex-col gap-4"> 
-        <button className="shadow bg-orange-600 rounded cursor-pointer py-1 px-2 text-white">{cVRecommendations[0]}</button>
-        <button className="shadow bg-orange-600 rounded cursor-pointer py-1 px-2 text-white">{cVRecommendations[1]}</button>
-        <button className="shadow bg-orange-600 rounded cursor-pointer py-1 px-2 text-white">{cVRecommendations[2]}</button>
-      </div>
+      {!isLoading ? 
+      <>
+        {cVRecommendations.length > 0 && !isLoading && 
+          <GetRecommendJob recommend = {cVRecommendations[0]}/>
+        }
+        {cVRecommendations.length > 1 && !isLoading && 
+          <GetRecommendJob recommend = {cVRecommendations[1]}/>
+        }
+        {cVRecommendations.length > 2 && !isLoading && 
+          <GetRecommendJob recommend = {cVRecommendations[2]}/>
+        }
+      </>
 
-    </CVRecommendContext.Provider>
+      :
+      <>
+          <p className="animate-spin rounded-full h-4 w-4 border-t-white border-1 border-gray-500 ml-2"></p>
+      </>
+      }
+
     </>  
   )
 }

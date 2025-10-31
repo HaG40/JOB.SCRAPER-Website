@@ -77,30 +77,17 @@ func ScrapingJobbkk(keywrd string, page int, onlyBKK bool) ([]JobCard, error) {
 	return jobbkkCards, nil
 }
 
-func SingleScrapingJobbkk(keywrd string, index int, page int, onlyBKK bool) (JobCard, error) {
+func SingleScrapingJobbkk(keywrd string, index int) (JobCard, error) {
 
 	if jobbkkCards != nil {
 		jobbkkCards = nil
 	}
 
-	keywrd = strings.Join((strings.Split(strings.TrimSpace(keywrd), " ")), "+")
-	encodedKeywrd := url.QueryEscape(keywrd)
-	pageStr := strconv.Itoa(page)
+	keywrd = strings.ReplaceAll(keywrd, " ", "+")
+	// keywrd = strings.Join((strings.Split(strings.TrimSpace(keywrd), " ")), "+")
+	// encodedKeywrd := url.QueryEscape(keywrd)
 
-	var scrapeURL string
-	if keywrd == "" {
-		if onlyBKK {
-			scrapeURL = "https://www.jobbkk.com/jobs/lists/" + pageStr + "/หางาน?province_id=246"
-		} else {
-			scrapeURL = "https://www.jobbkk.com/jobs/lists/" + pageStr + "/หางาน"
-		}
-	} else {
-		if onlyBKK {
-			scrapeURL = "https://www.jobbkk.com/jobs/lists/" + pageStr + "/หางาน," + encodedKeywrd + "?province_id=246"
-		} else {
-			scrapeURL = "https://www.jobbkk.com/jobs/lists/" + pageStr + "/หางาน," + encodedKeywrd
-		}
-	}
+	scrapeURL := "https://www.jobbkk.com/jobs/lists/1" + "/หางาน," + keywrd
 
 	c := colly.NewCollector(colly.AllowedDomains("www.jobbkk.com", "jobbkk.com"))
 

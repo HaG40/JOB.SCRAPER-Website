@@ -14,7 +14,6 @@ function JobSearch() {
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated } = useContext(AuthContext);
   const { user } = useContext(UserContext);
-  const [toggleSideBar, setToggleSideBar] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,10 +54,6 @@ const handleSidebarClick =(kw) => {
 
   return (
     <div className="flex flex-row justify-start"> 
-    
-    {toggleSideBar &&
-      <SideBar/>
-    }
       
       <div className="flex flex-row justify-center w-1/2 mx-auto"> 
       <div className="p-4 max-w-xl mx-auto">
@@ -99,7 +94,6 @@ const handleSidebarClick =(kw) => {
             <option value="all">ทั้งหมด</option>
             <option value="jobbkk">JobBKK.com</option>
             <option value="jobthai">JobThai.com</option>
-            <option value="jobth">JobTH.com</option>
           </select>
 
 
@@ -210,14 +204,12 @@ const handleSidebarClick =(kw) => {
       </div>
 
     </div>
-    {isAuthenticated ? 
+
       <div className="mt-15 ml-10 flex flex-row justify-center ">
+        <JobReccomendByUserCV/>        
         <JobReccomendByUserPreferences/>
-        <JobReccomendByUserCV/>
       </div>
-    :
-      <></>
-    }
+
       </div>
     </div>
   );
