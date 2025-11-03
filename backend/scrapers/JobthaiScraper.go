@@ -70,17 +70,19 @@ func ScrapingJobthai(keywrd string, page int, onlyBKK bool) ([]JobCard, error) {
 	return jobthaiCards, nil
 }
 
-func SingleScrapingJobthai(keywrd string, index int) (JobCard, error) {
+func SingleScrapingJobthai(keywrd string, page int, index int) (JobCard, error) {
 
 	if jobthaiCards != nil {
 		jobthaiCards = nil
 	}
 
 	keywrd = strings.ReplaceAll(keywrd, " ", "+")
+	pageStr := strconv.Itoa(page)
+
 	// keywrd = strings.Join((strings.Split(strings.TrimSpace(keywrd), " ")), "+")
 	// encodedKeywrd := url.QueryEscape(keywrd)
 
-	scrapeURL := "https://www.jobthai.com/th/jobs?keyword=" + keywrd + "&page=1"
+	scrapeURL := "https://www.jobthai.com/th/jobs?keyword=" + keywrd + "&page=" + pageStr
 
 	c := colly.NewCollector(colly.AllowedDomains("www.jobthai.com", "jobthai.com"))
 

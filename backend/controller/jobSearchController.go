@@ -123,42 +123,35 @@ func JobSearchForRecommendation(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-type", "application/json")
 
 		keyword := r.URL.Query().Get("keyword")
+		// strings.Split(keyword, ",")
 
-		var jobbkkData, jobthaiData scrapers.JobCard
-		var scrapeErr int
-
-		scraperFuncs := []func(string, int) (scrapers.JobCard, error){
+		scraperFuncs := []func(string, int, int) (scrapers.JobCard, error){
 			scrapers.SingleScrapingJobbkk,
 			scrapers.SingleScrapingJobthai,
 		}
 
-		var jobs scrapers.JobCard
-		var err error
 		min := 1
-		max := 5
-		for i, scrape := range scraperFuncs {
-			randomNumber := rand.Intn(max-min) + min
-			jobs, err = scrape(keyword, randomNumber)
-			if err != nil {
-				log.Printf("Error scraping source #%d: %v", i+1, err)
-				scrapeErr++
-				continue
-			}
-			if i == 0 {
-				jobbkkData = jobs
-			}
-			if i == 1 {
-				jobthaiData = jobs
+		max := 10
+		used := make(map[int]bool)
+
+		var randomNumber int
+		for {
+			randomNumber = rand.Intn(max-min) + min
+			if !used[randomNumber] {
+				used[randomNumber] = true
+				break
 			}
 		}
 
-		if scrapeErr >= len(scraperFuncs) {
-			w.WriteHeader(http.StatusNotFound)
+		randomIndex := rand.Intn(2)
+
+		job, err := scraperFuncs[randomIndex](keyword, 1, randomNumber)
+		if err != nil {
+			http.Error(w, "Fail to scrape single job :"+err.Error(), http.StatusBadRequest)
 		}
 
 		var data []scrapers.JobCard
-		data = append(data, jobbkkData)
-		data = append(data, jobthaiData)
+		data = append(data, job)
 
 		if len(data) == 0 {
 			w.Write([]byte("No data available"))

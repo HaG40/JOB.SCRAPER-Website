@@ -149,7 +149,7 @@ function UserBox() {
                         {user.cv ? 
                             <CVViewer/>
                         :
-                            <label><b>เรซูเม่</b>: "ไม่มีไฟล์"</label>
+                            <label><b>เรซูเม่</b>: ไม่มีไฟล์</label>
                         }
                         
                     </div>

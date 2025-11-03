@@ -14,20 +14,28 @@ function JobSearch() {
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated } = useContext(AuthContext);
   const { user } = useContext(UserContext);
+  const [cache, setCache] = useState({});
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     await fetchResults(1); // Reset to page 1 on new search
   };
 
-const handleSidebarClick =(kw) => {
-  setKeyword(kw);
-  fetchResults(1, kw); // Call fetchResults with page 1 and the clicked keyword
-};
-
   const fetchResults = async (targetPage = page, kw = keyword) => {
     setIsLoading(true);
-    document.body.style.cursor = "progress"
+    document.body.style.cursor = "progress";
+
+    const cacheKey = `${kw}|${targetPage}|${bkkOnly}|${source}`;
+
+    // 🔹 ถ้ามีใน cache แล้ว — ใช้ของเดิม ไม่ต้อง fetch ใหม่
+    if (cache[cacheKey]) {
+      setResults(cache[cacheKey]);
+      setPage(targetPage);
+      setIsLoading(false);
+      document.body.style.cursor = "default";
+      return;
+    }
+
     const params = new URLSearchParams({
       keyword: kw,
       page: targetPage.toString(),
@@ -37,18 +45,20 @@ const handleSidebarClick =(kw) => {
 
     try {
       const res = await fetch(`http://localhost:8888/api/jobs?${params.toString()}`);
-      
       if (!res.ok) throw new Error("Something went wrong");
       const data = await res.json();
+
+      // 🔹 เก็บลง cache
+      setCache((prev) => ({ ...prev, [cacheKey]: data }));
       setResults(data);
       setPage(targetPage);
-      
+
     } catch (err) {
       console.error("Fetch error:", err);
       setResults([]);
     } finally {
       setIsLoading(false);
-      document.body.style.cursor = "default"
+      document.body.style.cursor = "default";
     }
   };
 
@@ -205,7 +215,7 @@ const handleSidebarClick =(kw) => {
 
     </div>
 
-      <div className="mt-15 ml-10 flex flex-row justify-center ">
+      <div className="mt-15 ml-10 flex flex-row justify-center gap-4">
         <JobReccomendByUserCV/>        
         <JobReccomendByUserPreferences/>
       </div>
@@ -213,68 +223,6 @@ const handleSidebarClick =(kw) => {
       </div>
     </div>
   );
-  
-  function SideBar() { 
-
-      const categoryList = ["กฏหมาย","การศึกษา/วิชาการ","การแพทย์","งานบริการ","ช่าง/ช่างเทคนิค","บัญชี","มนุษยศาสตร์/ล่าม","วิศวกรรม","โฆษณา/สื่อ","ไอที"]
-      const jobList = [["ทนายความ","นักกฏหมาย","นิติกร"],
-                      ["ครู","บรรณารักษ์","อาจารย์","ติวเตอร์ "],
-                      ["ทันตแพทย์","เทคนิคการแพทย์","สัตวแพทย์","เภสัชกรรม","พยาบาลวิชาชีพ",],
-                      ["พนักงานต้อนรับ","พนักงานบริการ","แม่บ้าน","บาริสต้า"],
-                      ["ช่างไฟฟ้า","ช่างยนต์","ช่างแอร์"],
-                      ["พนักงานบัญชี","ผู้ตรวจสอบบัญชี","เจ้าหน้าที่การเงิน"],
-                      ["ล่ามภาษาอังกฤษ","ล่ามภาษาจีน","ล่ามภาษาญี่ปุ่น"],
-                      ["วิศวกรเขียนแบบ","วิศวกรไฟฟ้า","วิศวกรเครื่องกล","วิศวกรโยธา"],
-                      ["นักออกแบบกราฟิก","ครีเอทีฟ"],
-                      ["Developer","Software Engineer","System Analyst","Data Analyst"]]
-
-      return (
-          <div id="sidebar" className="h-screen w-50 fixed bg-gray-50 border-e border-gray-200 shadow flex items-center flex-col overflow-y-auto pb-50">
-              <div id="category-list" className="h-auto border-b border-gray-300 flex justify-center items-center w-full pt-4 bg-yellow-100 sticky top-0 rounded-b-lg shadow">
-                  <h2 className="flex pb-5 text-orange-600 font-bold cursor-default">ประเภทงานแนะนำ</h2>
-              </div>
-              {categoryList.map((category,index) => (
-                  <CategoryItemComponent key={index} index={index+1} value={category} jobItems={jobList[index]} />    
-              ))}
-          </div>
-      )
-  }
-
-  function CategoryItemComponent(props) {
-      const [isOpen, setIsOpen] = useState(false)
-      const [isActive, setIsActive] = useState(false);
-
-    const handleClick = () => {
-        setIsOpen(!isOpen)
-        setIsActive(!isActive);
-    }
-
-      return (
-          <div id= {"category-"+props.index} className="border-b border-gray-300 flex flex-col w-full">
-              <ul 
-                  className={`border-b border-gray-300 pb-3 pt-3 flex  justify-center 
-                            items-center cursor-pointer 
-                            ${isActive ? "bg-orange-400 text-white font-semibold" : "text-orange-400 hover:font-semibold hover:bg-yellow-50 hover:text-orange-500"}`}
-                  onClick={handleClick}    
-              >{props.value}</ul>
-              {isOpen && (
-                  <ul>
-                      {props.jobItems.map((item,i) => (
-                        <li 
-                          key={`${props.index}-${i}`}
-                          className="group flex flex-row justify-between p-1.5 pl-3 cursor-pointer text-gray-500 border-b border-gray-200 hover:text-orange-400 hover:bg-yellow-50"
-                          onClick={(e) => 
-                            handleSidebarClick(item)}
-                        >
-                          <label className='items-center'>{(item)} </label>
-                          <FaSearch className=' hidden group-hover:flex justify-self-end-safe items-center mt-1'> &nbsp;</FaSearch> 
-                        </li>  
-                      ))}
-                  </ul>
-              )}
-          </div>
-      )
-  }
 }
 
 

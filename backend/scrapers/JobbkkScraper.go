@@ -77,17 +77,19 @@ func ScrapingJobbkk(keywrd string, page int, onlyBKK bool) ([]JobCard, error) {
 	return jobbkkCards, nil
 }
 
-func SingleScrapingJobbkk(keywrd string, index int) (JobCard, error) {
+func SingleScrapingJobbkk(keywrd string, page int, index int) (JobCard, error) {
 
 	if jobbkkCards != nil {
 		jobbkkCards = nil
 	}
 
 	keywrd = strings.ReplaceAll(keywrd, " ", "+")
+	pageStr := strconv.Itoa(page)
+
 	// keywrd = strings.Join((strings.Split(strings.TrimSpace(keywrd), " ")), "+")
 	// encodedKeywrd := url.QueryEscape(keywrd)
 
-	scrapeURL := "https://www.jobbkk.com/jobs/lists/1" + "/หางาน," + keywrd
+	scrapeURL := "https://www.jobbkk.com/jobs/lists/" + pageStr + "/หางาน," + keywrd
 
 	c := colly.NewCollector(colly.AllowedDomains("www.jobbkk.com", "jobbkk.com"))
 
@@ -106,8 +108,6 @@ func SingleScrapingJobbkk(keywrd string, index int) (JobCard, error) {
 		scrapedAttribute := h.Attr("onclick")
 		tmpCard.URL = "https:/" + getJobUrl(scrapedAttribute)
 		tmpCard.Source = "jobbkk.com"
-
-		// fmt.Println(tmpCard.Title + "\n" + tmpCard.Company + "\n" + tmpCard.Location + "\n" + tmpCard.Salary + "\n" + tmpCard.URL + "\n" + tmpCard.Source + "\n")
 
 		jobbkkCards = append(jobbkkCards, tmpCard)
 	})

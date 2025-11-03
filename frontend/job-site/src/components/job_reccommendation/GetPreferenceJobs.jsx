@@ -16,21 +16,15 @@ function GetPreferenceJobs() {
         }  finally {
             setIsLoading(false)
         }
-    }, [user.id]);
+    }, []);
 
     return (
         <>
-            {prefRecommendations != null ? 
+            {!isLoading && prefRecommendations.length > 0 ? 
                 <> 
-                    {prefRecommendations.length > 0 && !isLoading &&  prefRecommendations[0] !== "" && (
-                    <GetRecommendJob recommend={prefRecommendations[0]} />
+                    {prefRecommendations.length > 0 && !isLoading &&  prefRecommendations.length > 0 && (
+                        <GetRecommendJob recommend={prefRecommendations} />
                     )}
-                    {prefRecommendations.length > 1 && !isLoading &&  prefRecommendations[1] !== "" && (
-                    <GetRecommendJob recommend={prefRecommendations[1]} />
-                    )}
-                    {prefRecommendations.length > 2 && !isLoading &&  prefRecommendations[2] !== "" && (
-                    <GetRecommendJob recommend={prefRecommendations[2]} />
-                    )}           
                 </>
             :
                 <p className="animate-spin rounded-full h-4 w-4 border-t-white border-1 border-gray-500 ml-2"></p>

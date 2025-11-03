@@ -15,7 +15,7 @@ function SendCVToPython() {
         // console.log(cVRecommendations)
         }
 
-    }, [user.id]);
+    }, []);
 
   const sendCV = async () => {
     setIsLoading(true)
@@ -52,19 +52,12 @@ function SendCVToPython() {
 
   return (
     <>
-      {!isLoading ? 
+      {!isLoading && cVRecommendations.length > 0 ? 
       <>
-        {cVRecommendations.length > 0 && !isLoading && 
-          <GetRecommendJob recommend = {cVRecommendations[0]}/>
-        }
-        {cVRecommendations.length > 1 && !isLoading && 
-          <GetRecommendJob recommend = {cVRecommendations[1]}/>
-        }
-        {cVRecommendations.length > 2 && !isLoading && 
-          <GetRecommendJob recommend = {cVRecommendations[2]}/>
-        }
+        {cVRecommendations.length > 0 && !isLoading && cVRecommendations.length > 0 && (
+          <GetRecommendJob recommend = {cVRecommendations}/>
+        )}
       </>
-
       :
       <>
           <p className="animate-spin rounded-full h-4 w-4 border-t-white border-1 border-gray-500 ml-2"></p>

@@ -104,8 +104,6 @@ function App() {
             <Route path='/user/view' element={<ViewUserPage/>}/>
             <Route path="/user/logout" element={<Logout />} />
           </Routes>
-
-
             {isAuthenticated ? 
             <>
               <ChatProvider>
@@ -113,8 +111,6 @@ function App() {
              </ChatProvider>
             </>
             : <></>}             
-
-          
         </UserContext.Provider>
       </AuthContext.Provider>
 
@@ -126,7 +122,6 @@ function App() {
         theme="light"
       />
       
-
     </>
   );
 }
