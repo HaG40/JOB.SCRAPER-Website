@@ -12,7 +12,7 @@ function SendCVToPython() {
 
             sendCV();
                     
-        // console.log(cVRecommendations)
+        console.log(cVRecommendations)
         }
 
     }, []);

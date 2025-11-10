@@ -58,7 +58,7 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 		var jobbkkData, jobthaiData []scrapers.JobCard
 		var scrapeErr int
 
-		scraperFuncs := []func(string, int, bool) ([]scrapers.JobCard, error){
+		scraperFuncs := []func(string, int, string, bool) ([]scrapers.JobCard, error){
 			scrapers.ScrapingJobbkk,
 			scrapers.ScrapingJobthai,
 		}
@@ -66,7 +66,7 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 		var jobs []scrapers.JobCard
 		for i, scrape := range scraperFuncs {
 			jobs = nil
-			jobs, err = scrape(keyword, page, bkkOnlyBool)
+			jobs, err = scrape(keyword, page, "", bkkOnlyBool)
 			if err != nil {
 				log.Printf("Error scraping source #%d: %v", i+1, err)
 				scrapeErr++

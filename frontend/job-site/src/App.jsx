@@ -10,9 +10,8 @@ import CreatePost from './components/job_post/CreatePost';
 import Logout from './components/users/Logout';
 import { ToastContainer } from 'react-toastify';
 import { useEffect, useState, createContext } from 'react';
-import calculateAge from "./utils/CalculateAge"
+import calculateAge from "./utils/CalculateAge";
 
-// 👉 import chatbot
 import ChatSidebar from './components/chat_bot/ChatSidebar';
 import { ChatProvider } from './components/chat_bot/ChatContext';
 
@@ -22,8 +21,11 @@ export const UserContext = createContext();
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null); 
+  const [isLoading, setIsLoading] = useState(true); // ✅ เพิ่มสำหรับ Loading
+
   const location = useLocation();
 
+  // ✅ โหลดข้อมูล user
   useEffect(() => {
     fetch("http://localhost:8888/api/user", {
       headers: { "Content-Type": "application/json" },
@@ -44,22 +46,33 @@ function App() {
             cv: data.cv,
           });
         } else {
-          console.log("Failed fetching user data");
           setUser(null);
         }
+      })
+      .finally(() => {
+        setIsLoading(false); // ✅ โหลดเสร็จ
       });
   }, []);
 
+  // ✅ เช็ค token เพื่อดูว่า login อยู่หรือไม่
   useEffect(() => {
     fetch("http://localhost:8888/api/protected", { credentials: "include" })
       .then(async (res) => {
-        if (res.ok) {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-        }
+        setIsAuthenticated(res.ok);
       });
   }, [user]);
+
+  // ✅ Fullscreen Loader
+  if (isLoading) {
+    return (
+      <div className="w-screen h-screen flex justify-center items-center bg-white">
+        <div className="flex flex-col justify-center items-center gap-4">
+          <div className="w-12 h-12 border-4 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+          <p className="text-gray-600 text-lg">กำลังโหลด...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -81,6 +94,7 @@ function App() {
               {user.username}
             </Link>
           ) : null}
+
           {isAuthenticated ? (
             <Link to="/user/logout">ออกจากระบบ</Link>
           ) : (
@@ -104,13 +118,12 @@ function App() {
             <Route path='/user/view' element={<ViewUserPage/>}/>
             <Route path="/user/logout" element={<Logout />} />
           </Routes>
-            {isAuthenticated ? 
-            <>
-              <ChatProvider>
-               <ChatSidebar/> 
-             </ChatProvider>
-            </>
-            : <></>}             
+
+          {isAuthenticated ? (
+            <ChatProvider>
+              <ChatSidebar/> 
+            </ChatProvider>
+          ) : null}
         </UserContext.Provider>
       </AuthContext.Provider>
 
@@ -121,7 +134,6 @@ function App() {
         pauseOnHover
         theme="light"
       />
-      
     </>
   );
 }

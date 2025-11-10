@@ -21,7 +21,7 @@ func getJobUrl(url string) string {
 	return s
 }
 
-func ScrapingJobbkk(keywrd string, page int, onlyBKK bool) ([]JobCard, error) {
+func ScrapingJobbkk(keywrd string, page int, province string, onlyBKK bool) ([]JobCard, error) {
 
 	if jobbkkCards != nil {
 		jobbkkCards = nil
@@ -29,9 +29,11 @@ func ScrapingJobbkk(keywrd string, page int, onlyBKK bool) ([]JobCard, error) {
 
 	keywrd = strings.Join((strings.Split(strings.TrimSpace(keywrd), " ")), "+")
 	encodedKeywrd := url.QueryEscape(keywrd)
+	// encodedProvince := url.QueryEscape(province)
 	pageStr := strconv.Itoa(page)
 
 	var scrapeURL string
+
 	if keywrd == "" {
 		if onlyBKK {
 			scrapeURL = "https://www.jobbkk.com/jobs/lists/" + pageStr + "/หางาน?province_id=246"

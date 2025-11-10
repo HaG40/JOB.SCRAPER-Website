@@ -12,7 +12,7 @@ import (
 
 var jobthCards []JobCard
 
-func ScrapingJobTH(keywrd string, page int, onlyBKK bool) ([]JobCard, error) {
+func ScrapingJobTH(keywrd string, page int, province string, onlyBKK bool) ([]JobCard, error) {
 
 	if jobthCards != nil {
 		jobthCards = nil

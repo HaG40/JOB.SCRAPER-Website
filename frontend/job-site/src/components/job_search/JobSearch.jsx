@@ -4,11 +4,13 @@ import FavoriteButton from './FavoriteButton';
 import { FaSearch } from 'react-icons/fa';
 import JobReccomendByUserPreferences from '../job_reccommendation/JobReccomendByUserPreferences';
 import JobReccomendByUserCV from '../job_reccommendation/JobReccomendByUserCV';
+import { provinces } from '../../utils/AllProvince';
 
 function JobSearch() {
   const [keyword, setKeyword] = useState('');
   const [page, setPage] = useState(1);
-  const [bkkOnly, setBkkOnly] = useState(false);
+  // const [bkkOnly, setBkkOnly] = useState(false);
+  const [province, setProvince] = useState("")
   const [source, setSource] = useState("all");
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -106,8 +108,20 @@ function JobSearch() {
             <option value="jobthai">JobThai.com</option>
           </select>
 
+          <label className="mr-2">จังหวัด:</label>
+          <select
+            value={province}
+            onChange={(e) => setProvince(e.target.value)}
+            className="border p-1 mr-4 rounded w-35 cursor-pointer shadow border-gray-400 text-gray-500"
+            disabled={isLoading}
+          >
+            <option value="all">ทั้งหมด</option>
+            {provinces.map((p,index) => (
+              <option key={index} value={p}>{p}</option>
+            ))}
+          </select>
 
-          <input
+          {/* <input
             type="checkbox"
             checked={bkkOnly}
             onChange={() => setBkkOnly(!bkkOnly)}
@@ -115,7 +129,7 @@ function JobSearch() {
             disabled={isLoading}
             className="mr-2 accent-orange-600 cursor-pointer"
           />
-          <label htmlFor="bkkOnly">ภายในกทม.</label>
+          <label htmlFor="bkkOnly">ภายในกทม.</label> */}
         </div>
 
 

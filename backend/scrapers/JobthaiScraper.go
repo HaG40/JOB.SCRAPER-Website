@@ -11,7 +11,7 @@ import (
 
 var jobthaiCards []JobCard
 
-func ScrapingJobthai(keywrd string, page int, onlyBKK bool) ([]JobCard, error) {
+func ScrapingJobthai(keywrd string, page int, province string, onlyBKK bool) ([]JobCard, error) {
 
 	if jobthaiCards != nil {
 		jobthaiCards = nil
@@ -19,11 +19,14 @@ func ScrapingJobthai(keywrd string, page int, onlyBKK bool) ([]JobCard, error) {
 
 	keywrd = strings.Join((strings.Split(strings.TrimSpace(keywrd), " ")), "+")
 	encodedKeywrd := url.QueryEscape(keywrd)
+	encodedProvince := url.QueryEscape(province)
 	pageStr := strconv.Itoa(page)
 
 	var scrapeURL string
 	if keywrd == "" {
-		if onlyBKK {
+		if province != "" {
+			scrapeURL = "https://www.jobthai.com/หางาน/" + encodedKeywrd + "/" + pageStr
+		} else if onlyBKK {
 			scrapeURL = "https://www.jobthai.com/หางาน/กรุงเทพมหานคร/" + pageStr
 		} else {
 			scrapeURL = "https://www.jobthai.com/หางาน/งานทั้งหมด/" + pageStr
