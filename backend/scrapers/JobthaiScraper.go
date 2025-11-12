@@ -19,7 +19,7 @@ func ScrapingJobthai(keywrd string, page int, province string, onlyBKK bool) ([]
 
 	keywrd = strings.Join((strings.Split(strings.TrimSpace(keywrd), " ")), "+")
 	encodedKeywrd := url.QueryEscape(keywrd)
-	encodedProvince := url.QueryEscape(province)
+	// encodedProvince := url.QueryEscape(province)
 	pageStr := strconv.Itoa(page)
 
 	var scrapeURL string

@@ -60,6 +60,15 @@ function ChatSidebar() {
     }
   }, [messages, loading]);
 
+  useEffect(() => {
+  if (showInterview) {
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: "🟢 เริ่มต้นการสัมภาษณ์" },
+    ]);
+  }
+}, [showInterview]);
+
   return (
     <>
       <div

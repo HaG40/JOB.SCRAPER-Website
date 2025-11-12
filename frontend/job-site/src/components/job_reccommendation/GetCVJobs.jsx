@@ -41,7 +41,7 @@ function SendCVToPython() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const data = await res.json();
-      // console.log("✅ Response:", data);
+      console.log("✅ Response:", data);
       setCVRecommendations(data.jobs);
     } catch (err) {
       console.error("❌ ส่ง PDF ไม่สำเร็จ:", err);
