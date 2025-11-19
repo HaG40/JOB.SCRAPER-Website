@@ -14,8 +14,8 @@ import os
 import re
 from io import BytesIO
 from pydantic import BaseModel
+import base64
 
-# ชี้ path ไปที่ tesseract.exe ของคุณ
 pytesseract.pytesseract.tesseract_cmd = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
 
 load_dotenv()
@@ -23,7 +23,6 @@ API_KEY = os.getenv("GROQ_API_KEY")
 
 app = FastAPI(title="AI Resume Analyzer API")
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,12 +35,8 @@ client = Groq(api_key=API_KEY)
 conversation_history = []
 resume_uploaded = False
 resume_cache = ""
-interview_history = []  # 🆕 เก็บประวัติการสัมภาษณ์
+interview_history = []
 
-
-# -------------------------
-# Extract Text (PDF/Images)
-# -------------------------
 def extract_text(uploaded_file) -> str:
     """Extract text from PDF or Image using OCR"""
     try:
@@ -50,7 +45,6 @@ def extract_text(uploaded_file) -> str:
         content = uploaded_file.file.read()
 
         if filename.endswith(".pdf"):
-            # Convert PDF pages to images
             images = convert_from_bytes(content, poppler_path=r"C:/Program Files/poppler-25.07.0/Library/bin")
             text = ""
             for img in images:
@@ -58,7 +52,6 @@ def extract_text(uploaded_file) -> str:
             return text.strip()
 
         elif filename.endswith((".png", ".jpg", ".jpeg")):
-            # OCR สำหรับรูปภาพ
             image = Image.open(BytesIO(content))
             text = pytesseract.image_to_string(image, lang="eng+tha")
             return text.strip()
@@ -69,41 +62,56 @@ def extract_text(uploaded_file) -> str:
     except Exception as e:
         return f"❌ Error extracting text: {str(e)}"
 
-
-# -------------------------
-# Extract scores %
-# -------------------------
 def extract_scores(text: str):
     pattern = r'(\d+(?:\.\d+)?)%'
     matches = re.findall(pattern, text)
     return [float(m) for m in matches]
 
+def file_to_base64(file: UploadFile) -> str:
+    """
+    แปลง UploadFile เป็น Base64
+    - PDF (หน้าเดียว) → JPG → Base64 string
+    - JPG/PNG → Base64 string
+    """
+    content_type = file.content_type
+    file_bytes = file.file.read()
+    file.file.close()
 
-# -------------------------
-# Analyze Resume
-# -------------------------
+    if content_type == "application/pdf":
+        images = convert_from_bytes(
+            file_bytes,
+            poppler_path=r"C:/Program Files/poppler-25.07.0/Library/bin"
+        )
+        img = images[0]
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG")
+        base64_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
+        return base64_str
+
+    elif content_type in ["image/jpeg", "image/jpg", "image/png"]:
+        return base64.b64encode(file_bytes).decode("utf-8")
+    else:
+        raise ValueError("ไฟล์ต้องเป็น PDF, JPG หรือ PNG เท่านั้น")
+
 @app.post("/analyze")
 async def analyze_resume(resume_file: UploadFile = File(...)):
     global resume_uploaded, resume_cache, conversation_history
 
-    resume_text = extract_text(resume_file)
-    resume_cache = resume_text
+    base64_image = file_to_base64(resume_file)
     resume_uploaded = True
 
     conversation_history.append({
         "role": "system",
-        "content": f"นี่คือเรซูเม่ที่อัปโหลดล่าสุดของผู้ใช้:\n{resume_cache[:1500]}"
+        "content": f"นี่คือเรซูเม่ที่อัปโหลดล่าสุดของผู้ใช้:\n{resume_cache[:1000]}"
     })
 
-    # Prompt แบบไม่มี Job Description + 🆕 บอกว่าใช้ได้กับโหมดสัมภาษณ์ด้วย
     prompt = f"""
 คุณคือ AI Resume Analyzer ช่วยวิเคราะห์เรซูเม่ต่อไปนี้:
 
-📄 **เรซูเม่ผู้สมัคร:**
-{resume_text}
-
 📝 **คำสั่ง:**
+- ตวรจก่อนว่าไฟล์ที่อัปโหลดมาเป็นเรซูเม่หรือไม่ หากไม่ทำการแจ้งเตือน ว่าไฟล์นี้ไม่ใช่เรซูเม่ และสิ้นสุดทันทีโดยไม่ดำเนินการต่อตาม propmt ต่อไป
 - ชี้จุดเด่นและทักษะที่สำคัญของผู้สมัคร
+- สกิล/ความสามารถ/สกิล สรุปออกมาให้ดู พร้อมคะแนน หากมีระบุไว้ (ภายในเรซูเม่อาจจะมี bar chart หรือ infographic ต่างๆแสดงข้อมูลทักษะ )
 - ชี้จุดที่ควรปรับปรุงเพื่อให้เรซูเม่สมบูรณ์ยิ่งขึ้น
 - ให้คะแนนแต่ละส่วน (ทักษะ/ประสบการณ์/ความสมบูรณ์) พร้อม Emoji นำหน้าประโยค ดังนี้:
   - ✅ ครบถ้วน ตรงตามข้อกำหนด
@@ -118,31 +126,37 @@ async def analyze_resume(resume_file: UploadFile = File(...)):
 """
 
     answer = client.chat.completions.create(
-        model="openai/gpt-oss-120b",
+        model="meta-llama/llama-4-scout-17b-16e-instruct",
         messages=[
             {"role": "system", "content": "คุณคือ HR AI Analyzer"},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": 
+             [
+                {"type": "text", "text": prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}",
+                    },
+                },   
+             ]
+            },
         ],
-        temperature=0.2,
+        temperature=0.1,
         max_tokens=800,
     )
 
     report = answer.choices[0].message.content
     scores = extract_scores(report)
     avg_score = round(sum(scores) / len(scores), 2) if scores else None
-    print(resume_text)
+
+    conversation_history.append({"role": "assistant", "content": report})
+    resume_cache = report
 
     return JSONResponse({
-        "resume_text": resume_text[:500],
         "report": report,
         "scores": scores,
         "average_score": avg_score
     })
-
-
-# -------------------------
-# Chat with AI (Emoji/Format)
-# -------------------------
 class ChatRequest(BaseModel):
     message: str
 
@@ -153,7 +167,7 @@ async def chat_with_ai(req: ChatRequest):
 
     user_message = req.message
     if resume_uploaded:
-        user_content = f"{user_message}\n\n(📄 บริบทเพิ่มเติม: เรซูเม่ล่าสุดคือ {resume_cache[:400]}...)"
+        user_content = f"{user_message}\n\n(📄 บริบทเพิ่มเติม: เรซูเม่ล่าสุดคือ {resume_cache}...)"
     else:
         user_content = user_message
 
@@ -172,7 +186,7 @@ async def chat_with_ai(req: ChatRequest):
 {user_message}
 
 📄 บริบท:
-{"เรซูเม่ล่าสุด: " + resume_cache[:400] + "..." if resume_uploaded else "ไม่มีเรซูเม่"}
+{"เรซูเม่ล่าสุด: " + resume_cache[:500] + "..." if resume_uploaded else "ไม่มีเรซูเม่"}
 """
         answer = client.chat.completions.create(
             model="openai/gpt-oss-120b",
@@ -194,74 +208,13 @@ async def chat_with_ai(req: ChatRequest):
         "history": conversation_history[-5:]
     })
 
-
-@app.post("/interview")
-async def interview_mode(req: ChatRequest):
-    global conversation_history, resume_uploaded, resume_cache, interview_history
-
-    user_message = req.message
-    if resume_uploaded:
-        user_content = f"{user_message}\n\n(📄 บริบทเพิ่มเติม: เรซูเม่ล่าสุดคือ {resume_cache[:400]}...)"
-    else:
-        user_content = user_message
-
-    conversation_history.append({"role": "user", "content": user_content})
-
-    try:
-        prompt = f"""
-                - คุณคือ HR เพศหญิงที่กำลังสัมภาษณ์งานตามตำแหน่งที่ผู้สมัครต้องการ ให้ถาม-ตอบเหมือนการสัมภาษณ์จริง ลงท้ายคำด้วย(คะ/ค่ะ)เท่านั้น เข้มงวดต่อการสัมภาษณ์ในแต่ละครั้งประเมิณว่าผู้สนทนามีประโยชน์อะไรต่อองค์กรหรือไม่ สามารถมีการสนทนาเล็กๆน้อย 
-                - ไม่ต้องสวัสดีทุกครั้ง ทำความเข้าใจกับผู้สมัคร พยายามอย่าถามคำถามซ้ำๆ หากข้อมูลไม่เพียงพอจงประมวลผลจากข้อมูลที่มีอยู่ อย่าใจดีกับผู้สมัครเด็ดขาด
-                - เริ่มต้นการสัมภาษณ์ ด้วยการถามผู้สมัครว่าต้องการสมัครงานในตำแหน่งอะไร
-                - ถามคำถามทีละข้อ ไม่ควรถามยาวเกินไป
-                - หากผู้ใช้ต้องการหยุดหรือจบการสัมภาษณ์ ให้คะแนนในการสัมภาษณ์ครั้งนี้แก่ผู้ใช้ในรูปแบบ ( /5) โดยไม่เอาเรซูเม่ที่อัปโหลดไว้มาคิดคะแนน  รวมถึงบอกเหตุผลและข้อที่ต้องแก้ไขปรับปรุง
-                - จากนั้นบอกให้ผู้ใช้ปิดโหมดสัมภาษณ์หากไม่ใช้แล้ว หรือ หากผู้ใช้มีคำถามใดๆเพิ่มเติมเกี่ยวกับการสัมภาษณ์เมื่อกี้จงตอบให้ชัดเจนละเอียดถีถ้วน และ ผู้ใช้สามารถเริ่มต้นการสัมภาษณ์ใหม่ก็ได้
-                - ทุกข้อความให้อยู่ใน **ภาษาไทย** และสามารถมี **ภาษาอังกฤษสั้นๆเป็นชื่อตำแหน่งงานเท่านั้นหากจำเป็น** 
-                - ℹ️ หากถูกใช้ใน endpoint อื่น (เช่น chat/analyze) คุณยังสามารถจำลองโหมดสัมภาษณ์ได้เช่นกัน
-
-                ผู้ใช้ตอบ:
-                {user_message}
-
-                📄 บริบท:
-                {"เรซูเม่ล่าสุด: " + resume_cache[:400] + "..." if resume_uploaded else "ไม่มีเรซูเม่"}
-                """
-        answer = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
-            messages=[
-                {"role": "system", "content": "คุณคือ HR สัมภาษณ์งาน เป้าหมายคือการสัมภาษณ์คู่สนทนา"},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=500,
-        )
-        response_text = answer.choices[0].message.content
-    except Exception as e:
-        response_text = f"❌ เกิดข้อผิดพลาด: {str(e)}"
-
-    conversation_history.append({"role": "assistant", "content": response_text})
-    interview_history.append({"question": user_message, "answer": response_text})  # 🆕 เก็บ log
-
-    return JSONResponse({
-        "reply": response_text,
-        "history": conversation_history[-5:]
-    })
-
-
-# -------------------------
-# Interview Log (ใหม่)
-# -------------------------
-@app.get("/interview_log")
-async def get_interview_log():
-    return JSONResponse({
-        "interview_history": interview_history
-    })
-
 @app.post("/recommend/cv")
 async def analyze_resume(resume_file: UploadFile = File(...)):
 
     resume_text = extract_text(resume_file)
     conversation_history.append({
         "role": "system",
-        "content": f"นี่คือเรซูเม่ที่อัปโหลดล่าสุดของผู้ใช้:\n{resume_cache[:1500]}"
+        "content": f"นี่คือเรซูเม่ที่อัปโหลดล่าสุดของผู้ใช้:\n{resume_cache}"
     })
 
     prompt = f"""
@@ -283,8 +236,8 @@ async def analyze_resume(resume_file: UploadFile = File(...)):
             {"role": "system", "content": "คุณคือ HR AI Analyzer"},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.2,
-        max_tokens=1500,
+        temperature=0.1,
+        max_tokens=500,
     )
 
     response = answer.choices[0].message.content

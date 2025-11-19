@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react';
 import { AuthContext, UserContext } from '../../App';
 import FavoriteButton from './FavoriteButton';
 import { FaSearch } from 'react-icons/fa';
-import JobReccomendByUserPreferences from '../job_reccommendation/JobReccomendByUserPreferences';
 import JobReccomendByUserCV from '../job_reccommendation/JobReccomendByUserCV';
 import { provinces } from '../../utils/AllProvince';
 
@@ -60,7 +59,7 @@ function JobSearch() {
   };
 
   return (
-    <div className="flex flex-col items-center px-4 md:px-10 w-full">
+    <div className="flex flex-col items-center px-4 md:px-10">
       <div className="flex flex-col lg:flex-row justify-center max-w-7xl mx-auto">
         <div className="w-full lg:w-2/3 p-4 flex flex-col">
           <h1 className="text-2xl font-bold mb-4 text-orange-500 text-center lg:text-left">
@@ -105,6 +104,7 @@ function JobSearch() {
                 <option value="all">ทั้งหมด</option>
                 <option value="jobbkk">JobBKK.com</option>
                 <option value="jobthai">JobThai.com</option>
+                <option value="jobth">JobTh.com</option>
               </select>
 
               <label className="ml-2 mr-1 text-sm sm:text-base">จังหวัด:</label>
@@ -214,11 +214,6 @@ function JobSearch() {
               <p className="text-gray-500 text-center mt-10">ไม่พบข้อมูล</p>
             )}
           </div>
-        </div>
-
-        <div className="mt-10 w-full lg:w-1/3 flex flex-col gap-4 items-center">
-          <JobReccomendByUserCV />
-          <JobReccomendByUserPreferences />
         </div>
       </div>
     </div>

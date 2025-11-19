@@ -9,7 +9,7 @@ function JobReccomendByUserCV() {
   
   return (
     <div className="p-2 w-sm">
-      <h1 className="text-lg font-bold mb-4 text-orange-500">งานที่เหมาะกับคุณ</h1>
+      <h1 className="text-lg font-bold mb-4 text-orange-500">งานที่เหมาะกับคุณ (วิเคราะห์จากเรซูเม่)</h1>
 
       {isAuthenticated && user? 
         user.cv ? 

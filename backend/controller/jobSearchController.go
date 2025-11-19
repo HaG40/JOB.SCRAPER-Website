@@ -55,12 +55,13 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 			bkkOnlyBool = false
 		}
 
-		var jobbkkData, jobthaiData []scrapers.JobCard
+		var jobbkkData, jobthaiData, jobthData []scrapers.JobCard
 		var scrapeErr int
 
 		scraperFuncs := []func(string, int, string, bool) ([]scrapers.JobCard, error){
 			scrapers.ScrapingJobbkk,
 			scrapers.ScrapingJobthai,
+			scrapers.ScrapingJobTH,
 		}
 
 		var jobs []scrapers.JobCard
@@ -79,6 +80,9 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 			if i == 1 {
 				jobthaiData = append(jobthaiData, jobs...)
 			}
+			if i == 2 {
+				jobthData = append(jobthData, jobs...)
+			}
 		}
 
 		if scrapeErr >= len(scraperFuncs) {
@@ -89,14 +93,18 @@ func JobsHandler(w http.ResponseWriter, r *http.Request) {
 		if contains(source, "all") {
 			data = append(data, jobbkkData...)
 			data = append(data, jobthaiData...)
+			data = append(data, jobthData...)
 
-			// shuffle(data)
+			shuffle(data)
 		}
 		if contains(source, "jobbkk") {
 			data = append(data, jobbkkData...)
 		}
 		if contains(source, "jobthai") {
 			data = append(data, jobthaiData...)
+		}
+		if contains(source, "jobth") {
+			data = append(data, jobthData...)
 		}
 
 		// convert to json

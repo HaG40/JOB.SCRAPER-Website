@@ -1,12 +1,9 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import JobPost from './components/job_post/JobPost';
 import JobSearch from './components/job_search/JobSearch';
 import LoginPage from './components/users/LoginPage';
 import RegisterPage from './components/users/RegisterPage';
 import UserPage from './components/users/UserPage';
 import ViewUserPage from './components/users/ViewUserPage';
-import ViewPost from './components/job_post/ViewPost';
-import CreatePost from './components/job_post/CreatePost';
 import Logout from './components/users/Logout';
 import { ToastContainer } from 'react-toastify';
 import { useEffect, useState, createContext } from 'react';
@@ -14,6 +11,7 @@ import calculateAge from "./utils/CalculateAge";
 
 import ChatSidebar from './components/chat_bot/ChatSidebar';
 import { ChatProvider } from './components/chat_bot/ChatContext';
+import JobMatcher from './components/job_matcher/JobMatcher';
 
 export const AuthContext = createContext();
 export const UserContext = createContext();
@@ -77,13 +75,18 @@ function App() {
   return (
     <>
       <div id='header' className='bg-orange-400 z-100 text-white sticky top-0 w-screen h-15 flex justify-between shadow items-center'>
-        <h1 className='flex pl-5 items-center font-bold text-4xl'>JOB.SCRAPER TH</h1>
+        <h1 className='flex pl-5 items-center font-bold text-4xl'>JOBJAB TH</h1>
         <div className="flex flex-row gap-4 items-center text-lg pr-10">
           <Link
             to="/"
             className={`${location.pathname === "/" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
           >
-            ค้นหา
+              Search
+          </Link>
+          <Link 
+            to="/matcher"
+            className={`${location.pathname === "/matcher" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}>
+            Job Match
           </Link>
 
           {isAuthenticated && user ? (
@@ -116,6 +119,7 @@ function App() {
             <Route path="/user/register" element={<RegisterPage />} />
             <Route path="/user" element={<UserPage />} />
             <Route path='/user/view' element={<ViewUserPage/>}/>
+            <Route path='matcher' element={<JobMatcher/>}/>
             <Route path="/user/logout" element={<Logout />} />
           </Routes>
 

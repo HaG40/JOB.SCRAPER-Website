@@ -10,7 +10,6 @@ function ChatSidebar() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showAnalyzer, setShowAnalyzer] = useState(false);
-  const [showInterview, setShowInterview] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useContext(AuthContext);
   const { user } = useContext(UserContext);
@@ -28,9 +27,7 @@ function ChatSidebar() {
     setLoading(true);
 
     try {
-      const url = showInterview
-        ? "http://localhost:5000/interview" // ✅ ใช้ interview endpoint ถ้าเปิดโหมด
-        : "http://localhost:5000/chat";
+        const url ="http://localhost:5000/chat";
 
       const res = await fetch(url, {
         method: "POST",
@@ -59,15 +56,6 @@ function ChatSidebar() {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, loading]);
-
-  useEffect(() => {
-  if (showInterview) {
-    setMessages((prev) => [
-      ...prev,
-      { role: "assistant", content: "🟢 เริ่มต้นการสัมภาษณ์" },
-    ]);
-  }
-}, [showInterview]);
 
   return (
     <>
@@ -140,14 +128,6 @@ function ChatSidebar() {
             placeholder="พิมพ์ข้อความ..."
             className="flex-1 border p-2 rounded-lg"
           />
-
-          <button
-            type="button"
-            onClick={() => setShowInterview(!showInterview)}
-            className="px-3 py-2 rounded-lg cursor-pointer bg-orange-400 text-white hover:bg-orange-500"
-          >
-            {showInterview ? "🟢 สัมภาษณ์" : "⚪ สัมภาษณ์"}
-          </button>
 
           <button
             type="submit"

@@ -8,7 +8,6 @@ import CVViewer from './CVViewer';
 function UserBox() {
     const { user } = useContext(UserContext);
     const fullName = `${user.firstName} ${user.lastName}`;
-    const [interestedJob, setInterestedJob] = useState(user.interested_job?.split(',') || [""]);
     const [editMode, setEditMode] = useState(false);
     const [cvFile, setCvFile] = useState(null);
 
@@ -22,27 +21,6 @@ function UserBox() {
         interested_job: user.interested_job || "",
         cv: null,
     });
-
-    const handleJobChange = (index, value) => {
-        const newJobs = [...interestedJob];
-        newJobs[index] = value;
-        setInterestedJob(newJobs);
-    };
-
-    const addJobField = () => {
-        if (interestedJob.length < 3) {
-            setInterestedJob([...interestedJob, ""]);
-        } else {
-            toast.warning("เพิ่มได้สูงสุด 3 งานเท่านั้น", {
-                position: "bottom-center",
-                hideProgressBar: true,
-            });
-        }
-    };
-
-    const removeJobField = (index) => {
-        setInterestedJob(interestedJob.filter((_, i) => i !== index));
-    };
 
     const handleEdit = (e) => {
         e.preventDefault();
@@ -59,7 +37,6 @@ function UserBox() {
 
         const payload = {
             ...requestData,
-            interested_job: interestedJob.join(","),
             cv: cvBytes ? Array.from(new Uint8Array(cvBytes)) : null,
         };
 
@@ -112,19 +89,6 @@ function UserBox() {
                             <input type="email" value={requestData.email} onChange={e => setRequestData({ ...requestData, email: e.target.value })} />
                         </div>
 
-                        {/* Interested Jobs */}
-                        <div className='flex flex-row justify-between'>
-                            <label><b>งานที่สนใจ</b>: (สูงสุด 3 งาน)</label>
-                            {interestedJob.length < 3 && <button type="button" onClick={addJobField} className="text-blue-600 hover:underline">เพิ่ม</button>}
-                        </div>
-
-                        {interestedJob.map((job, index) => (
-                            <div key={index} className='flex flex-row items-center mb-2'>
-                                <input type="text" value={job} onChange={e => handleJobChange(index, e.target.value)} className="border p-2 rounded w-full" />
-                                {interestedJob.length > 1 && <button type="button" onClick={() => removeJobField(index)} className="ml-2 text-red-500">ลบ</button>}
-                            </div>
-                        ))}
-
                         {/* CV Upload */}
                         <label className="mt-2"><b>เรซูเม่</b>: (pdf เท่านั้น)</label>
                         <input id="resume-upload" type="file" accept=".pdf" onChange={e => setCvFile(e.target.files[0])} className="hidden" />
@@ -145,7 +109,7 @@ function UserBox() {
                         <label><b>ชื่อ</b>: {fullName}</label>
                         <label><b>อายุ</b>: {user.age}</label>
                         <label><b>อีเมลล์</b>: {user.email}</label>
-                        <label><b>งานที่สนใจ</b>: {user.interested_job}</label>                        
+                                             
                         {user.cv ? 
                             <CVViewer/>
                         :
