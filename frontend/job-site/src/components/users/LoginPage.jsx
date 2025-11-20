@@ -1,3 +1,4 @@
+import loginIcon from '/login-icon.png';
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -40,7 +41,10 @@ function LoginPage() {
 
     return (
         <div className='p-4 max-w-xl mx-auto border rounded-2xl border-gray-300 justify-self-center px-10 pt-8 pb-12 mt-15 shadow'>
-            <h1 className="text-3xl font-bold mb-6 text-orange-600">เข้าสู่ระบบ</h1>
+            <div className="flex items-center mb-6">
+                <h1 className="text-3xl font-bold text-orange-600 mr-3">เข้าสู่ระบบ</h1>
+                <img src={loginIcon} alt="login icon" className="w-12 h-12" />
+            </div>
             <form onSubmit={handleSubmit}>
                 <div className='justify-self-center flex flex-col'>
                     <div className='flex flex-row'>

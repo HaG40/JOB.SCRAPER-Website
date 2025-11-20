@@ -60,8 +60,8 @@ function JobSearch() {
 
   return (
     <div className="flex flex-col items-center px-4 md:px-10">
-      <div className="flex flex-col lg:flex-row justify-center max-w-7xl mx-auto">
-        <div className="w-full lg:w-2/3 p-4 flex flex-col">
+      <div className="flex flex-col lg:flex-row justify-center max-w-7xl mx-auto gap-2">
+        <div className="w-full lg:w-2/4 p-10 flex flex-col">
           <h1 className="text-2xl font-bold mb-4 text-orange-500 text-center lg:text-left">
             Job Search
           </h1>
@@ -213,6 +213,37 @@ function JobSearch() {
             ) : (
               <p className="text-gray-500 text-center mt-10">ไม่พบข้อมูล</p>
             )}
+          </div>
+        </div>
+        {/* Trending/Stats - right (sticky) */}
+        <div className="w-full lg:w-1/3 p-10 flex flex-col gap-10 lg:sticky lg:top-32 h-fit">
+          {/* Trending search box */}
+          <div className="border rounded-2xl bg-white shadow-sm p-4 mb-4">
+            <h3 className="font-bold mb-2">Recommended Job</h3>
+            <hr className="mb-2" />
+            <div className="flex flex-wrap gap-2">
+              {/* ตัวอย่าง tag สามารถแก้ไขให้ดึงจาก backend ได้ */}
+              <span className="border rounded px-2 py-1 text-sm">หางานนิคมอุตสาหกรรม</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานโรงแรม</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานเชียงใหม่</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานภูเก็ต</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานขอนแก่น</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานครั้ง</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานเชียงราย</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานชลบุรี</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานระยอง</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานนนทบุรี</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานสมุทรปราการ</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานสงขลา</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานปทุมธานี</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานนครศรีธรรมราช</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานปทุมธานี</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานพิจิตร</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานสุราษฎร์ธานี</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานสมุทรสาคร</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานสระบุรี</span>
+              <span className="border rounded px-2 py-1 text-sm">หางานอุดรธานี</span>
+            </div>
           </div>
         </div>
       </div>

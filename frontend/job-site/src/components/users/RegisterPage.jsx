@@ -47,10 +47,42 @@ function RegisterPage() {
     }
 
     return (
-        <div className='p-4 max-w-xl mx-auto border rounded-2xl border-gray-300 justify-self-center px-10 pt-8 pb-12 my-15 shadow'>
+      <div className="flex flex-col lg:flex-row max-w-4xl mx-auto w-full">
+        {/* Left info box (only on large screens) */}
+        <div className="hidden lg:flex flex-col justify-center w-1/2 pr-8">
+          <h2 className="text-2xl font-bold mb-4 text-gray-700">หางาน ได้งานเร็วต้อง JOBJAB TH</h2>
+          <ul className="space-y-6 text-gray-700">
+            <li>
+              <span className="font-bold text-lg flex items-center mb-1">
+                <span className="mr-2">🔍</span> หางานง่าย สะดวก รวดเร็ว กับ JOBJAB TH
+              </span>
+              <span className="block ml-7">PLACE HOLDER || หางาน สมัครงานออนไลน์ ฟรี! ไม่มีค่าใช้จ่าย</span>
+              <span className="block ml-7">PLACE HOLDER || เพียงมีเรซูเม่จาก JOBJAB TH กดปุ่ม “Job Match” ได้ทันที</span>
+              <span className="block ml-7">PLACE HOLDER || มีช่องทางสมัครงานอื่น ๆ อีก 3 วิธีให้ผู้สมัครได้เลือกสมัคร</span>
+            </li>
+            <li>
+              <span className="font-bold text-lg flex items-center mb-1">
+                <span className="mr-2">🤖</span> ระบบ AI อัจฉริยะ เพื่อช่วยคุณเพิ่มโอกาสได้งาน
+              </span>
+              <span className="block ml-7">PLACE HOLDER || AI ช่วยสร้างและแนะนำเรซูเม่ให้น่าสนใจ เช่น แนะนำอาชีพ แนะนำทักษะที่ควรระบุ ฯลฯ</span>
+              <span className="block ml-7">PLACE HOLDER || ระบบ Matching ที่จะช่วยแมชชิ่งเรซูเม่ของคุณกับตำแหน่งงานที่ผู้ประกอบการ</span>
+              <span className="block ml-7">PLACE HOLDER || และระบบ Job Match ช่วยจับคู่แมทช์งานกับเรซูเม่ของคุณโดยอัตโนมัติ</span>
+            </li>
+            <li>
+              <span className="font-bold text-lg flex items-center mb-1">
+                <span className="mr-2">⭐</span> PLACE HOLDER || ฟีเจอร์พิเศษ เพื่อเพิ่มโอกาสถูกเรียกสัมภาษณ์มากกว่า 90%
+              </span>
+              <span className="block ml-7">PLACE HOLDER || ระบบ “ต้องการงานด่วน” แจ้งให้ผู้ประกอบการรู้ว่าคุณพร้อมเริ่มงานทันทีภายใน 7/15/30 วัน</span>
+              <span className="block ml-7">PLACE HOLDER || ระบบ “Resume Premium” ที่ช่วยให้โปรไฟล์ของคุณถูกมองเห็นก่อนใคร</span>
+            </li>
+          </ul>
+        </div>
+        {/* Register form - right */}
+        <div className='p-4 w-full lg:w-1/2 border rounded-2xl border-gray-300 justify-self-center px-10 pt-8 pb-12 my-15 shadow'>
             <h1 className="text-3xl font-bold mb-6 text-orange-600">ลงทะเบียน</h1>
             <form onSubmit={handleSubmit}>
                 <div className='justify-self-center flex flex-col'>
+                    {/* ...existing form code... */}
                     <div className='flex flex-row'>
                         {errormsg != "" && username == "" ? <label className='flex text-red-500 text-2xl mr-1'>*</label> : <></>}
                         <label className='mb-2'>ชื่อผู้ใช้ :</label>
@@ -62,6 +94,7 @@ function RegisterPage() {
                         className={`border p-2 rounded w-85 mb-4 shadow border-gray-400` }
                         placeholder='username'
                     />
+                    {/* ...rest of form code unchanged... */}
                     <div className='flex flex-row'>
                         {errormsg != "" && firstName == "" && lastName == "" ? <label className='flex text-red-500 text-2xl mr-1'>*</label> : <></>}
                         <label className='mb-2'>ชื่อจริง :</label>
@@ -146,6 +179,7 @@ function RegisterPage() {
                 </div>
             </form>
         </div>
+      </div>
     )
 }
 
