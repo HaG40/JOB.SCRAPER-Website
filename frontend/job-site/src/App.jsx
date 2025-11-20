@@ -74,40 +74,53 @@ function App() {
 
   return (
     <>
-      <div id='header' className='bg-orange-400 z-100 text-white sticky top-0 w-screen h-15 flex justify-between shadow items-center'>
+      <div id='header' className='bg-white z-100 text-orange-400 sticky top-0 w-screen h-20 flex justify-between shadow items-center'>
         <h1 className='flex pl-5 items-center font-bold text-4xl'>JOBJAB TH</h1>
-        <div className="flex flex-row gap-4 items-center text-lg pr-10">
-          <Link
-            to="/"
-            className={`${location.pathname === "/" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
-          >
-              Search
-          </Link>
-          <Link 
-            to="/matcher"
-            className={`${location.pathname === "/matcher" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}>
-            Job Match
-          </Link>
+      </div>
 
-          {isAuthenticated && user ? (
+      {/* Orange Navbar: Search left, Job Match center, Login right */}
+      <div className="bg-orange-400 text-white w-screen h-14 flex items-center px-8 shadow-md sticky top-20 z-50">
+        <div className="flex flex-row justify-end items-center gap-8">
+          {/* Search - left */}
+          <div className="flex items-center w-4xs">
             <Link
-              to="/user"
-              className={`${location.pathname === "/user" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
+              to="/"
+              className={`ml-2 ${location.pathname === "/" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
             >
-              {user.username}
+              Search
             </Link>
-          ) : null}
-
-          {isAuthenticated ? (
-            <Link to="/user/logout">ออกจากระบบ</Link>
-          ) : (
+          </div>
+          {/* Job Match - center */}
+          <div className="flex items-center w-4xs">
             <Link 
-              to="/user/login"
-              className={`${location.pathname === "/user/login" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
+              to="/matcher"
+              className={`${location.pathname === "/matcher" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
             >
-              เข้าสู่ระบบ
+              Job Match
             </Link>
-          )}
+          </div>
+          {/* Login - right */}
+          <div className="flex items-center w-4xs">
+            {isAuthenticated && user ? (
+              <Link
+                to="/user"
+                className={`${location.pathname === "/user" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
+              >
+                {user.username}
+              </Link>
+            ) : null}
+
+            {isAuthenticated ? (
+              <Link to="/user/logout" className="ml-4">ออกจากระบบ</Link>
+            ) : (
+              <Link 
+                to="/user/login"
+                className={`ml-4 ${location.pathname === "/user/login" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
+              >
+                เข้าสู่ระบบ
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 

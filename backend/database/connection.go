@@ -24,10 +24,10 @@ func Connect() *gorm.DB {
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 
-	if err != nil {
-		log.Fatal("Database connection failed to initialize")
-		return nil
-	}
+	// if err != nil {
+	// 	log.Fatal("Database connection failed to initialize")
+	// 	return nil
+	// }
 
 	db.AutoMigrate(&models.User{}, &models.FavoriteJobs{}, &models.FindPost{}, &models.RecruitPost{}, &models.ContractPost{}, &models.Comment{}, &models.PreferenceJobs{}, &models.CVJobs{})
 
