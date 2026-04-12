@@ -1,0 +1,4 @@
+# Ignore environment variables file
+.env       
+go.mod
+go.sum
