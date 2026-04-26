@@ -107,7 +107,9 @@ function GetRecommendJob(props) {
           if (Array.isArray(data)) {
             collectedResults.push(...data);
           }
-        } catch {}
+        } catch (err) {
+          console.error(`Failed to fetch recommendations for keyword: ${keyword}`, err);
+        }
       }
 
       const unique = collectedResults.filter(

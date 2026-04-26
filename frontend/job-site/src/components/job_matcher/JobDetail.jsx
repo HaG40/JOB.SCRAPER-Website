@@ -1,11 +1,12 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState, createContext } from "react";
 import { JobCompareContext1 } from "./JobMatcher";
 
 const CACHE_TTL = 1000 * 60 * 10;
+const jobDetailContext = createContext();
 
 function JobDetail() {
     const [jobDetail, setJobDetail] = useState(null);
-    const { jobBox1 } = useContext(JobCompareContext1);
+    const { jobBox1, detail, setDetail } = useContext(JobCompareContext1);
     const textareaRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -32,6 +33,7 @@ function JobDetail() {
                         // เช็ค TTL
                         if (Date.now() - parsed.timestamp < CACHE_TTL) {
                             setJobDetail(parsed.data);
+                            setDetail(parsed.data.detail); // อัปเดต detail ใน context
                             return; // ไม่ต้อง fetch
                         } else {
                             localStorage.removeItem(cacheKey);
@@ -55,6 +57,7 @@ function JobDetail() {
 
                 const data = await res.json();
                 setJobDetail(data);
+                setDetail(data.detail); // อัปเดต detail ใน context
 
                 if (cacheKey) {
                     localStorage.setItem(

@@ -2,7 +2,7 @@
 # activate && conda activate base
 # uvicorn main:app --reload --port 5000
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, Response, UploadFile, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
@@ -15,6 +15,7 @@ import re
 from io import BytesIO
 from pydantic import BaseModel
 import base64
+from fastapi import Body
 
 pytesseract.pytesseract.tesseract_cmd = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
 
@@ -25,7 +26,11 @@ app = FastAPI(title="AI Resume Analyzer API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -282,3 +287,105 @@ async def recommend_job_by_cv(resume_file: UploadFile = File(...)):
         "reply": ",".join(jobs),
         "jobs": jobs,
     })
+
+from fastapi import UploadFile, File, Form
+from pdf2image import convert_from_bytes
+import base64, io, re
+
+@app.options("/match")
+async def preflight():
+    return Response(status_code=200)
+
+@app.post("/match")
+async def match(
+    resume_file: UploadFile = File(...),
+    job_title: str = Form(...),
+    job_detail: str = Form(...)
+):
+    try:
+        file_bytes = await resume_file.read()
+        content_type = resume_file.content_type
+
+        # ✅ รองรับทั้ง PDF และ Image
+        if content_type == "application/pdf":
+            pages = convert_from_bytes(
+                file_bytes,
+                dpi=300,
+                poppler_path=r"C:/Program Files/poppler-25.07.0/Library/bin"
+            )
+            images = pages
+
+        elif content_type in ["image/jpeg", "image/png", "image/jpg"]:
+            images = [Image.open(BytesIO(file_bytes))]
+
+        else:
+            return JSONResponse(
+                {"error": f"Unsupported file type: {content_type}"},
+                status_code=400
+            )
+
+        # ✅ แปลงทุกหน้าเป็น base64
+        images_base64 = []
+        for img in images:
+            buf = BytesIO()
+            img.save(buf, format="JPEG")
+            images_base64.append(base64.b64encode(buf.getvalue()).decode())
+
+        prompt = f"""
+คุณคือ AI Job Matching Engine
+
+ชื่องาน: {job_title}
+
+รายละเอียดงาน:
+{job_detail}
+
+ตอบกลับตาม FORMAT นี้เท่านั้น
+
+[SCORE]
+78
+
+[REASON]
+เหตุผล
+
+[ADVICE]
+คำแนะนำ
+"""
+
+        messages = [{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                *[
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{img}"
+                        }
+                    }
+                    for img in images_base64
+                ]
+            ]
+        }]
+
+        response = client.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=messages,
+            temperature=0.2,
+            max_tokens=800,
+        )
+
+        result = response.choices[0].message.content
+
+        score_match = re.search(r"\[SCORE\]\s*(\d+)", result)
+        reason_match = re.search(r"\[REASON\]\s*(.*?)\s*\[ADVICE\]", result, re.S)
+        advice_match = re.search(r"\[ADVICE\]\s*(.*)", result, re.S)
+
+        return {
+            "score": int(score_match.group(1)) if score_match else 0,
+            "reason": reason_match.group(1).strip() if reason_match else "",
+            "advice": advice_match.group(1).strip() if advice_match else ""
+        }
+
+    except Exception as e:
+        print("MATCH ERROR:", e)
+        return JSONResponse({"error": str(e)}, status_code=500)

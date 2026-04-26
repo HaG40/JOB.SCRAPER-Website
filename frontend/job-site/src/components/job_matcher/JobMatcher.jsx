@@ -9,10 +9,11 @@ export const JobCompareContext1 = createContext();
 
 function JobMatcher() {
   const [jobBox1, setJobBox1] = useState(null);
+  const [detail, setDetail] = useState(null);
 
   return (
     <>
-      <JobCompareContext1.Provider value={{ jobBox1, setJobBox1 }}>
+      <JobCompareContext1.Provider value={{ jobBox1, setJobBox1, detail, setDetail }}>
         <div className="mx-auto flex flex-row justify-center gap-4 mt-10">
 
           <JobReccomendByUserCV />

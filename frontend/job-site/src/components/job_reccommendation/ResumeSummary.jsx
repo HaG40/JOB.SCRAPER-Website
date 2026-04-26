@@ -51,7 +51,7 @@ export default function ResumeSummary() {
 
       const data = await res.json();
 
-      setResumeScore(data.average_score);
+      setResumeScore(data.scores);
       setReport(data.report);
     } catch (err) {
       console.error(err);
