@@ -74,18 +74,11 @@ function App() {
       <div id='header' className='bg-orange-400 z-100 text-white sticky top-0 w-screen h-15 flex justify-between shadow items-center'>
         <h1 className='flex pl-5 items-center font-bold text-4xl'>JOBJAB TH</h1>
         <div className="flex flex-row gap-4 items-center text-lg pr-10">
-          <Link
-            to="/"
-            className={`${location.pathname === "/" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
-          >
-              Search
-          </Link>
           <Link 
-            to="/matcher"
-            className={`${location.pathname === "/matcher" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}>
+            to="/"
+            className={`${location.pathname === "/" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}>
             Match
           </Link>
-
           {isAuthenticated && user ? (
             <Link
               to="/user"
@@ -111,12 +104,11 @@ function App() {
       <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
         <UserContext.Provider value={{ user, setUser }}>
           <Routes>
-            <Route path="/" element={<JobSearch />} />   
             <Route path="/user/login" element={<LoginPage />} />
             <Route path="/user/register" element={<RegisterPage />} />
             <Route path="/user" element={<UserPage />} />
             <Route path='/user/view' element={<ViewUserPage/>}/>
-            <Route path='matcher' element={<JobMatcher/>}/>
+            <Route path='/' element={<JobMatcher/>}/>
             <Route path="/user/logout" element={<Logout />} />
           </Routes>
 

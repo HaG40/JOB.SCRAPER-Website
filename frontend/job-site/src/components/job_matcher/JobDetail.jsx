@@ -1,105 +1,104 @@
-import { useContext, useEffect, useRef, useState, createContext } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { JobCompareContext1 } from "./JobMatcher";
 
 const CACHE_TTL = 1000 * 60 * 10;
-const jobDetailContext = createContext();
 
 function JobDetail() {
-    const [jobDetail, setJobDetail] = useState(null);
-    const { jobBox1, detail, setDetail } = useContext(JobCompareContext1);
-    const textareaRef = useRef(null);
-    const [isLoading, setIsLoading] = useState(false);
+  const [jobDetail, setJobDetail] = useState(null);
+  const { jobBox1, setDetail } = useContext(JobCompareContext1);
+  const textareaRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-    const cacheKey = jobBox1
-        ? `jobDetail_${jobBox1.source}_${jobBox1.url}`
-        : null;
+  const cacheKey = jobBox1
+    ? `jobDetail_${jobBox1.source}_${jobBox1.url}`
+    : null;
 
-    const params = new URLSearchParams({
-        url: jobBox1 ? jobBox1.url : "",
-        source: jobBox1 ? jobBox1.source : "",
-    });
+  useEffect(() => {
+    const fetchJobDetail = async () => {
+      if (!jobBox1) return;
 
-    useEffect(() => {
-        const fetchJobDetail = async () => {
-            if (!jobBox1) return;
-
-            try {
-                if (cacheKey) {
-                    const cached = localStorage.getItem(cacheKey);
-
-                    if (cached) {
-                        const parsed = JSON.parse(cached);
-
-                        // เช็ค TTL
-                        if (Date.now() - parsed.timestamp < CACHE_TTL) {
-                            setJobDetail(parsed.data);
-                            setDetail(parsed.data.detail); // อัปเดต detail ใน context
-                            return; // ไม่ต้อง fetch
-                        } else {
-                            localStorage.removeItem(cacheKey);
-                        }
-                    }
-                }
-
-                setIsLoading(true);
-
-                const res = await fetch(
-                    `http://localhost:8888/api/jobs/detail?${params.toString()}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
-
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                const data = await res.json();
-                setJobDetail(data);
-                setDetail(data.detail); // อัปเดต detail ใน context
-
-                if (cacheKey) {
-                    localStorage.setItem(
-                        cacheKey,
-                        JSON.stringify({
-                            data,
-                            timestamp: Date.now(),
-                        })
-                    );
-                }
-            } catch (err) {
-                console.error("Fetch job detail error:", err);
-                setJobDetail(null);
-            } finally {
-                setIsLoading(false);
+      try {
+        if (cacheKey) {
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Date.now() - parsed.timestamp < CACHE_TTL) {
+              setJobDetail(parsed.data);
+              setDetail(parsed.data.detail);
+              return;
+            } else {
+              localStorage.removeItem(cacheKey);
             }
-        };
+          }
+        }
 
-        fetchJobDetail();
-    }, [jobBox1]);
+        setIsLoading(true);
 
-    useEffect(() => {
-        const el = textareaRef.current;
-        if (!el) return;
+        const params = new URLSearchParams({
+          url: jobBox1.url ?? "",
+          source: jobBox1.source ?? "",
+        });
 
-        el.style.height = "auto";
-        el.style.height = el.scrollHeight + "px";
-    }, [jobDetail?.detail]);
+        const res = await fetch(
+          `http://localhost:8888/api/jobs/detail?${params.toString()}`,
+          { method: "GET", headers: { "Content-Type": "application/json" } }
+        );
 
-    return isLoading ? (
-        <div className="flex flex-row gborder rounded-xl text-gray-500 border-gray-200 shadow p-6 m-2 gap-2 items-center w-full">
-            <p className="animate-spin rounded-full h-4 w-4 border-t-white border border-gray-500 ml-2"></p>
-            <p className="text-gray-500">กำลังโหลดรายละเอียด...</p>
-        </div>
-    ) : (
-        <textarea
-            ref={textareaRef}
-            className="border rounded-xl text-gray-500 border-gray-200 shadow p-4 resize-none w-full overflow-hidden"
-            readOnly
-            value={jobDetail ? jobDetail.detail : ""}
-        />
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+        setJobDetail(data);
+        setDetail(data.detail);
+
+        if (cacheKey) {
+          localStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
+        }
+      } catch (err) {
+        console.error("Fetch job detail error:", err);
+        setJobDetail(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobDetail();
+  }, [jobBox1]);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [jobDetail?.detail]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-3 px-1 py-2">
+        <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-200 border-t-orange-400 shrink-0" />
+        <p className="text-sm text-gray-400">กำลังโหลดรายละเอียด...</p>
+      </div>
     );
+  }
+
+  if (!jobDetail) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-2">
+        <span className="text-2xl">📭</span>
+        <p className="text-sm text-gray-400">ไม่พบรายละเอียดงาน</p>
+      </div>
+    );
+  }
+
+  return (
+    <textarea
+      ref={textareaRef}
+      readOnly
+      value={jobDetail.detail}
+      className="w-full resize-none overflow-hidden rounded-xl border border-gray-100
+                 bg-gray-50 px-4 py-3 text-sm text-gray-600 leading-relaxed
+                 shadow-sm focus:outline-none"
+    />
+  );
 }
 
 export default JobDetail;

@@ -57,6 +57,7 @@ function GetRecommendJob(props) {
     );
 
     setJobSelected(false);
+    setJobBox1({});
     toast.info("นำงานออกแล้ว");
   };
 
@@ -137,11 +138,8 @@ function GetRecommendJob(props) {
   };
 
   const handleReload = async () => {
-    if (jobSelected){
-      toast.warn("กรุณานำงานออกก่อนรีโหลด");
-      return;
-    }
-    
+    setJobBox1({});
+    setJobSelected(false);
     localStorage.removeItem(cacheKey);
     setResults([]);
     setIsLoading(true); 
@@ -177,48 +175,67 @@ function GetRecommendJob(props) {
                 }`}
               >
                 <div className="flex flex-row justify-between items-center gap-5">
-                  <div className="flex flex-col">
-                    <h3
-                      className={`text-md font-bold ${
-                        isAdded ? "text-white" : "text-orange-500"
-                      }`}
-                    >
-                      {job.title}
-                    </h3>
+                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                      <h3 className={`text-sm font-bold truncate
+                        ${isAdded ? "text-white" : "text-orange-500"}`}>
+                        {job.title}
+                      </h3>
+                      <p className={`text-xs ${isAdded ? "text-orange-100" : "text-gray-500"}`}>
+                        {job.company}
+                      </p>
+                      {job.location && (
+                        <p className={`text-xs ${isAdded ? "text-orange-100" : "text-gray-400"}`}>
+                          📍 {job.location}
+                        </p>
+                      )}
+                      {job.salary && (
+                        <p className={`text-xs ${isAdded ? "text-orange-100" : "text-gray-400"}`}>
+                          💰 {job.salary}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <a
+                          href={job.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`text-xs underline
+                            ${isAdded ? "text-white" : "text-blue-400 hover:text-blue-600"}`}
+                        >
+                          ดูงานนี้
+                        </a>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full
+                          ${isAdded
+                            ? "bg-orange-300 text-white"
+                            : "bg-amber-50 text-amber-600 border border-amber-100"}`}>
+                          {job.source}
+                        </span>
+                      </div>
+                    </div>
 
-                    <p
-                      className={`text-sm ${
-                        isAdded ? "text-white" : "text-orange-700"
-                      }`}
-                    >
-                      <span className="font-semibold">บริษัท:</span>{" "}
-                      {job.company}
-                    </p>
-                  </div>
-
-                  {isAdded ? (
-                    <button
-                      type="button"
-                      className="cursor-pointer p-2 bg-orange-800 text-white rounded-full shadow transition hover:scale-110"
-                      onClick={() => handleUnselect(job)}
-                    >
-                      <FaMinus />
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className={
-                        jobSelected
-                          ? "cursor-not-allowed p-2 bg-gray-300 text-white rounded-full shadow"
-                          : "cursor-pointer p-2 bg-orange-500 text-white rounded-full shadow transition hover:scale-110"
-                      }
-                      onClick={
-                        jobSelected ? undefined : () => handleSelect(job)
-                      }
-                    >
-                      <FaPlus />
-                    </button>
-                  )}
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      {isAdded ? (
+                        <button
+                          type="button"
+                          onClick={() => handleUnselect(job)}
+                          className="p-2 bg-orange-700 text-white rounded-full shadow
+                                     transition hover:scale-110"
+                        >
+                          <FaMinus size={12} />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={jobSelected ? undefined : () => handleSelect(job)}
+                          className={`p-2 rounded-full shadow text-white transition
+                            ${jobSelected
+                              ? "bg-gray-200 cursor-not-allowed"
+                              : "bg-orange-500 hover:scale-110 cursor-pointer"
+                            }`}
+                        >
+                          <FaPlus size={12} />
+                        </button>
+                      )}
+                    </div>
                 </div>
               </div>
             );
