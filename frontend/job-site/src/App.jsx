@@ -111,12 +111,6 @@ function App() {
             <Route path='/' element={<JobMatcher/>}/>
             <Route path="/user/logout" element={<Logout />} />
           </Routes>
-
-          {isAuthenticated && user ? (
-            <ChatProvider>
-              <ChatSidebar/> 
-            </ChatProvider>
-          ) : null}
         </UserContext.Provider>
       </AuthContext.Provider>
 

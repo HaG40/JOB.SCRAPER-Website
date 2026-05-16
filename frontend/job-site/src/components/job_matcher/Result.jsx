@@ -5,97 +5,18 @@ import { UserContext } from "../../App";
 const LOADING_TEXT = "กำลังวิเคราะห์...";
 
 const initialState = {
-  score: 0,
-  score_breakdown: { keyword: 0, experience: 0, education: 0, format: 0 },
-  keyword: "",
+  relevance:  "",
   experience: "",
-  education: "",
-  format_issues: "",
-  advice: "",
-  verdict: "",
+  skills:     "",
+  advice:     "",
 };
-
-const BREAKDOWN_CONFIG = [
-  { key: "keyword",    label: "🔑 Keyword",    max: 35 },
-  { key: "experience", label: "💼 ประสบการณ์", max: 30 },
-  { key: "education",  label: "🎓 การศึกษา",   max: 25 },
-  { key: "format",     label: "📄 Format",      max: 10 },
-];
 
 const DETAIL_FIELDS = [
-  { key: "keyword",       label: "🔑 คำสำคัญ (Keyword)" },
-  { key: "experience",    label: "💼 ประสบการณ์ทำงาน" },
-  { key: "education",     label: "🎓 การศึกษา" },
-  { key: "format_issues", label: "📄 รูปแบบ" },
-  { key: "advice",        label: "💡 คำแนะนำในการปรับปรุง" },
+  { key: "relevance",  label: "🎯 ความตรงกับตำแหน่ง" },
+  { key: "experience", label: "💼 ประสบการณ์ทำงาน" },
+  { key: "skills",     label: "🛠️ ทักษะและการศึกษา" },
+  { key: "advice",     label: "💡 คำแนะนำในการปรับปรุง" },
 ];
-
-const getScoreColor = (score, max) => {
-  const pct = (score / max) * 100;
-  if (pct >= 75) return { bar: "bg-emerald-400", text: "text-emerald-600", badge: "bg-emerald-50 border-emerald-200" };
-  if (pct >= 50) return { bar: "bg-amber-400",   text: "text-amber-600",   badge: "bg-amber-50 border-amber-200" };
-  if (pct < 50) return { bar: "bg-red-400",        text: "text-red-600",     badge: "bg-red-50 border-red-200" };
-};
-
-const getVerdictConfig = (verdict) => {
-  if (verdict.includes("ผ่าน") && !verdict.includes("ควร"))
-    return { emoji: "✅", color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" };
-  if (verdict.includes("ควรทบทวน"))
-    return { emoji: "⚠️", color: "text-amber-600",   bg: "bg-amber-50",   border: "border-amber-200" };
-  return   { emoji: "❌", color: "text-red-600",      bg: "bg-red-50",     border: "border-red-200" };
-};
-
-function ScoreRing({ score, loading }) {
-  const color = getScoreColor(score, 100);
-  const radius = 36;
-  const circ = 2 * Math.PI * radius;
-  const offset = loading ? circ : circ - (score / 100) * circ;
-
-  return (
-    <div className="relative flex items-center justify-center w-24 h-24">
-      <svg className="absolute rotate-[-90deg]" width="96" height="96">
-        <circle cx="48" cy="48" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="8" />
-        <circle
-          cx="48" cy="48" r={radius} fill="none"
-          strokeWidth="8" strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          className={`transition-all duration-700 ${
-            score >= 75 ? "stroke-emerald-400" : score >= 50 ? "stroke-amber-400" : "stroke-red-400"
-          }`}
-        />
-      </svg>
-      <div className="flex flex-col items-center z-10">
-        <span className={`text-2xl font-bold leading-none ${color.text}`}>
-          {loading ? "..." : score}
-        </span>
-        <span className="text-[10px] text-gray-400 mt-0.5">/ 100</span>
-      </div>
-    </div>
-  );
-}
-
-function BreakdownBar({ label, score, max, loading }) {
-  const pct = Math.min((score / max) * 100, 100);
-  const color = getScoreColor(score, max);
-
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="flex justify-between items-center">
-        <span className="text-xs text-gray-500">{label}</span>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${color.badge} ${color.text}`}>
-          {loading ? "-" : `${score} / ${max}`}
-        </span>
-      </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${color.bar}`}
-          style={{ width: loading ? "0%" : `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
 
 function DetailField({ label, value, loading }) {
   const ref = useRef(null);
@@ -123,28 +44,29 @@ function DetailField({ label, value, loading }) {
 }
 
 export default function Result() {
-  const { jobBox1, detail, setDetail } = useContext(JobCompareContext1);
+  const { jobBox1, detail } = useContext(JobCompareContext1);
   const { user } = useContext(UserContext);
 
   const [result, setResult] = useState(initialState);
   const [loading, setLoading] = useState(false);
 
-  const hasJob    = jobBox1 && Object.keys(jobBox1).length > 0;
-  const isReady   = hasJob && detail;
+  const hasJob  = jobBox1 && Object.keys(jobBox1).length > 0;
+  const isReady = hasJob && !!detail;
 
   const base64ToFile = (base64, filename) => {
     const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
     return new File([bytes], filename, { type: "application/pdf" });
   };
 
+  // ✅ reset เมื่อเงื่อนไขไม่ครบ
   useEffect(() => {
     if (!isReady) {
       setResult(initialState);
-      setDetail(null);
       setLoading(false);
     }
   }, [isReady]);
 
+  // ✅ fetch เมื่อครบทุกเงื่อนไข
   useEffect(() => {
     if (!isReady || !user?.cv) return;
     matchResumeWithJob();
@@ -163,14 +85,10 @@ export default function Result() {
       const data = await res.json();
 
       setResult({
-        score:           data.score           ?? 0,
-        score_breakdown: data.score_breakdown ?? { keyword: 0, experience: 0, education: 0, format: 0 },
-        keyword:         data.keyword         ?? "",
-        experience:      data.experience      ?? "",
-        education:       data.education       ?? "",
-        format_issues:   data.format_issues   ?? "",
-        advice:          data.advice          ?? "",
-        verdict:         data.verdict         ?? "",
+        relevance:  data.relevance  ?? "",
+        experience: data.experience ?? "",
+        skills:     data.skills     ?? "",
+        advice:     data.advice     ?? "",
       });
     } catch (err) {
       console.error("Match error:", err);
@@ -178,8 +96,6 @@ export default function Result() {
       setLoading(false);
     }
   };
-
-  const verdictCfg = getVerdictConfig(result.verdict || "");
 
   // ── Empty state: ไม่มี job ─────────────────────────────────────
   if (!hasJob) {
@@ -198,6 +114,7 @@ export default function Result() {
     );
   }
 
+  // ── Loading detail ─────────────────────────────────────────────
   if (!detail) {
     return (
       <div className="px-4 pb-8 bg-white">
@@ -213,59 +130,15 @@ export default function Result() {
 
   // ── Result ────────────────────────────────────────────────────
   return (
-    <div className="px-4 pb-8 space-y-5 bg-white">
-
-      {/* Score Card */}
-      <div className="rounded-2xl border border-gray-100 shadow-sm bg-white p-5">
-        <div className="flex items-center gap-4 mb-5">
-          <ScoreRing score={result.score} loading={loading} />
-          <div className="flex flex-col gap-1.5 flex-1">
-            <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">
-              คะแนนความเหมาะสม
-            </p>
-            {!loading && result.verdict ? (
-              <span className={`self-start text-sm font-semibold px-3 py-1 rounded-full border
-                               ${verdictCfg.bg} ${verdictCfg.border} ${verdictCfg.color}`}>
-                {verdictCfg.emoji} {result.verdict}
-              </span>
-            ) : (
-              <span className="self-start text-sm text-gray-300 italic">
-                {loading ? LOADING_TEXT : "-"}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="h-px bg-gray-100 mb-4" />
-
-        <p className="text-xs text-gray-400 uppercase tracking-widest font-medium mb-3">
-          คะแนนรายหมวด
-        </p>
-        <div className="space-y-3">
-          {BREAKDOWN_CONFIG.map(({ key, label, max }) => (
-            <BreakdownBar
-              key={key}
-              label={label}
-              max={max}
-              score={result.score_breakdown?.[key] ?? 0}
-              loading={loading}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Detail Fields */}
-      <div className="space-y-4">
-        {DETAIL_FIELDS.map(({ key, label }) => (
-          <DetailField
-            key={key}
-            label={label}
-            value={result[key]}
-            loading={loading}
-          />
-        ))}
-      </div>
-
+    <div className="px-4 pb-8 space-y-4 bg-white">
+      {DETAIL_FIELDS.map(({ key, label }) => (
+        <DetailField
+          key={key}
+          label={label}
+          value={result[key]}
+          loading={loading}
+        />
+      ))}
     </div>
   );
 }

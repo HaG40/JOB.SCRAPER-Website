@@ -101,79 +101,6 @@ class ChatRequest(BaseModel):
     message: str
 
 
-@app.post("/chat")
-async def chat_with_ai(req: ChatRequest):
-    global conversation_history, resume_uploaded, resume_cache, uploaded_base64_image
-
-    user_message = req.message
-
-    conversation_history.append({
-        "role": "user",
-        "content": user_message
-    })
-
-    try:
-        prompt = f"""
-- คุณคือ Job Assistant ของเว็บไซต์ Job.Scraper TH
-- เว็บไซต์รวบรวมข้อมูลงานในประเทศไทยจาก JobBKK, JobTH, JobThai
-- ตอบเป็นมิตร อ่านง่าย ใช้ Emoji เล็กน้อย
-- ไม่ต้องสวัสดีทุกครั้ง
-- ถ้าเกี่ยวข้องกับเรซูเม่ ให้ใช้เรซูเม่ล่าสุดที่ผู้ใช้อัปโหลด
-- จัดรูปแบบเป็น bullet list
-- ใช้ภาษาไทยเป็นหลัก (อังกฤษสั้น ๆ ได้)
-- ห้ามเริ่มสัมภาษณ์เองเด็ดขาด (แค่ "อธิบายโหมดสัมภาษณ์" ได้)
-
-ผู้ใช้ถาม:
-{user_message}
-
-📄 บริบท:
-{"มีเรซูเม่แล้ว" if resume_uploaded else "ยังไม่มีเรซูเม่"}
-"""
-        if resume_uploaded and uploaded_base64_image:
-            messages = [
-                {"role": "system", "content": "คุณคือ AI Job Assistant"},
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{uploaded_base64_image}",
-                            },
-                        },
-                    ],
-                },
-            ]
-        else:
-            messages = [
-                {"role": "system", "content": "คุณคือ AI Job Assistant"},
-                {"role": "user", "content": prompt},
-            ]
-
-        answer = client.chat.completions.create(
-            model="meta-llama/llama-4-scout-17b-16e-instruct",
-            messages=messages,
-            temperature=0.4,
-            max_tokens=500,
-        )
-
-        response_text = answer.choices[0].message.content
-
-    except Exception as e:
-        response_text = f"❌ เกิดข้อผิดพลาด: {str(e)}"
-
-    conversation_history.append({
-        "role": "assistant",
-        "content": response_text
-    })
-
-    return JSONResponse({
-        "reply": response_text,
-        "history": conversation_history[-5:]
-    })
-
-
 @app.post("/recommend/cv")
 async def recommend_job_by_cv(resume_file: UploadFile = File(...)):
     global conversation_history
@@ -295,95 +222,107 @@ async def match(
             images_base64.append(base64.b64encode(buf.getvalue()).decode())
 
         # ✅ System Prompt แบบ ATS ภาษาไทย
-        system_prompt = """คุณคือผู้เชี่ยวชาญระบบ ATS (Applicant Tracking System) สำหรับคัดกรองเรซูเม่และ CV กรุณาประเมินเรซูเม่ตามเกณฑ์มาตรฐาน ATS ดังต่อไปนี้:
+        system_prompt = """คุณคือที่ปรึกษาด้านเรซูเม่มืออาชีพ ทำหน้าที่วิเคราะห์เรซูเม่และให้คำแนะนำเชิงลึกที่นำไปปฏิบัติได้จริง
 
-1. การจับคู่คำสำคัญ (Keyword Matching)
-   - ตรวจสอบว่าเรซูเม่มีคำสำคัญจาก Job Description หรือไม่
-   - ครอบคลุม ทักษะ, เครื่องมือ, ใบรับรอง, ตำแหน่งงาน
-   - คำนวณเปอร์เซ็นต์ความตรงกัน และระบุคำสำคัญที่มี/ขาดหายไป
+=== ความรู้พื้นฐานที่ใช้ในการวิเคราะห์ (อ้างอิงจาก Jobsdb Thailand) ===
+
+[หลักการเขียนเรซูเม่ที่ดี — สิ่งที่ควรทำ]
+- แบ่งส่วนให้ชัดเจน: ข้อมูลส่วนตัว, Career Summary, ประสบการณ์ทำงาน, การศึกษา, ทักษะ
+- ใช้ภาษากระชับ เข้าใจง่าย ตรงประเด็น ไม่ใช้ประโยคยาวเกินไป
+- ใช้ Active Word เช่น Developed, Managed, Achieved, Increased, Reduced
+- เขียนทักษะที่เหมาะกับตำแหน่งงานเป็นหลัก ไม่ใช้ทักษะทั่วไปที่ไม่เกี่ยวข้อง
+- แสดงผลงานเป็นตัวเลขที่วัดได้ เช่น "เพิ่มยอดขาย 25%", "ดูแลทีม 10 คน", "ลดต้นทุน 15%"
+- เรียงประสบการณ์แบบ Reverse Chronological (ล่าสุดก่อน)
+- ระบุ Career Summary / Objective 2-3 บรรทัด ตอบคำถาม "ทำไมบริษัทถึงควรจ้างคุณ?"
+- ระบุ Certifications และการอบรมที่เกี่ยวข้องกับตำแหน่ง
+- ตรวจสอบความถูกต้องของการสะกดคำ ไวยากรณ์ และข้อมูลติดต่อ
+
+[สิ่งที่ไม่ควรทำ]
+- ห้ามแสดงทักษะเป็น Progress Bar / เปอร์เซ็นต์ / ค่าพลัง เพราะไม่สะท้อนความสามารถจริง
+- ห้ามใช้คำคุณศัพท์ลอยๆ ไม่มีหลักฐาน เช่น "ขยันมาก", "ทำงานเก่ง", "Innovative", "Dynamic"
+- ห้ามใส่ข้อมูลส่วนตัวที่ไม่จำเป็น เช่น ศาสนา น้ำหนัก ส่วนสูง สถานภาพสมรส (ยกเว้นงานสายการบิน)
+- ห้ามใส่เหตุผลที่ลาออกหรือเปลี่ยนงาน
+- ห้ามใส่ข้อมูลเท็จหรือเกินจริง
+- ห้ามใช้อีเมลที่ไม่เป็นทางการ (เช่น cute_girl99@gmail.com)
+- ห้ามเขียนหน้าที่งานแบบกว้างๆ โดยไม่มีผลงานหรือตัวเลขรองรับ
+- ห้ามใส่ข้อมูลซ้ำซ้อน หรือเรซูเม่ยาวเกิน 2-3 หน้า
+- ห้ามใช้ภาษาพูดหรือสไตล์โซเชียล
+
+[ทักษะ Soft Skills ที่ HR ให้ความสำคัญ]
+- Communication: ถ่ายทอดข้อมูลได้ชัดเจน มีประสิทธิภาพ
+- Collaboration: ทำงานเป็นทีม รับฟัง แลกเปลี่ยนความคิดเห็น
+- Decision Making & Problem Solving: วิเคราะห์และแก้ปัญหาได้
+- Negotiation: สื่อสารสองทางเพื่อหาจุดลงตัว
+- Time Management: จัดลำดับความสำคัญของงานได้
+- Adaptability & Active Learning: ปรับตัวและเรียนรู้สิ่งใหม่อยู่เสมอ
+
+[แนวทางเรซูเม่แยกตามสายงาน]
+- สายครีเอทีฟ: แสดงทักษะผ่านเลย์เอาต์ ระบุซอฟต์แวร์และระดับความเชี่ยวชาญ
+- สายคอนเทนต์: ระบุผลลัพธ์ที่วัดได้ (ยอด Engagement, จำนวนผู้อ่าน, Growth Rate)
+- สายภาษา: ระบุระดับความสามารถแยกตามทักษะ พร้อมผลสอบ (TOEIC, IELTS, JLPT)
+- สายการตลาด: เน้นตัวเลข Campaign ผลลัพธ์ที่วัดได้ และเครื่องมือที่ใช้ (Google Analytics, SEO)
+- สายบัญชี: ระบุซอฟต์แวร์ (SAP, Express) ใบรับรอง (CPA) และมูลค่างบที่ดูแล
+- สายไอที: ระบุ Tech Stack เฉพาะที่ใช้จริง โปรเจกต์พร้อมผลลัพธ์ และ Certifications (AWS, Microsoft)
+- สายการบิน: เน้น Soft Skills บริการ ภาษา และใบรับรองด้านความปลอดภัย
+- สายวิทย์: ระบุงานวิจัย ทักษะห้องแล็บ และผลงานตีพิมพ์
+- สายช่าง: ระบุเครื่องมือ โครงการ ขนาดงาน และใบรับรองด้านความปลอดภัย
+
+[Career Summary ที่ดีประกอบด้วย 3 ส่วน]
+1. ตำแหน่งงานปัจจุบัน / ระดับประสบการณ์
+2. ทักษะและความสำเร็จที่เกี่ยวข้องกับตำแหน่งที่สมัคร
+3. เป้าหมายในอาชีพระยะสั้นและระยะยาว
+
+=== หลักเกณฑ์การวิเคราะห์ ===
+
+วิเคราะห์เรซูเม่โดยเทียบกับ Job Description ที่ให้มา ใน 3 มิติต่อไปนี้ (ไม่วิเคราะห์เรื่อง Format หรือรูปแบบของเอกสาร):
+
+1. ความตรงกับตำแหน่ง (Job Relevance)
+   - ข้อมูลส่วนตัวและช่องทางติดต่อครบถ้วนหรือไม่
+   - มี Career Summary / Objective ที่ตอบโจทย์ตำแหน่งนี้หรือไม่
+   - เนื้อหาโดยรวมสอดคล้องกับ JD มากน้อยเพียงใด
+   - มีข้อมูลที่ไม่ควรมีในเรซูเม่หรือไม่
 
 2. ประสบการณ์ทำงาน (Work Experience)
-   - ตรวจสอบชื่อตำแหน่ง, บริษัท, ช่วงเวลาทำงาน
-   - ประเมินความสอดคล้องกับตำแหน่งที่สมัคร
-   - ตรวจสอบว่าเรียงแบบ Reverse Chronological (ล่าสุดก่อน) หรือไม่
+   - ระบุชื่อตำแหน่ง บริษัท และช่วงเวลาชัดเจนหรือไม่
+   - มีผลงานที่วัดผลได้เป็นตัวเลขหรือไม่
+   - ใช้ Active Words หรือยัง (Developed, Managed, Achieved ฯลฯ)
+   - หน้าที่งานเฉพาะเจาะจงหรือกว้างเกินไป
+   - เรียงลำดับแบบ Reverse Chronological หรือไม่
+   - ประสบการณ์ตรงกับ JD มากน้อยแค่ไหน
 
-3. การศึกษา (Education)
-   - ตรวจสอบระดับการศึกษา, สาขาวิชา, สถาบัน, ปีที่จบ
-   - ประเมินว่าตรงกับข้อกำหนดใน Job Description หรือไม่
-   - รวมถึง Certifications และใบรับรองที่เกี่ยวข้อง
+3. ทักษะและการศึกษา (Skills & Education)
+   - ทักษะที่ระบุตรงกับ JD หรือไม่ (Hard Skills และ Soft Skills)
+   - มีการแสดงทักษะแบบ Progress Bar / เปอร์เซ็นต์หรือไม่ (ไม่เหมาะสม)
+   - มีคำคุณศัพท์ลอยๆ ไม่มีหลักฐานหรือไม่
+   - วุฒิการศึกษา สาขา สถาบันครบถ้วนหรือไม่
+   - มี Certifications / การอบรมที่เกี่ยวข้องหรือไม่
 
-4. ทักษะ (Skills)
-   - แยกประเภท Hard Skills (ทักษะเฉพาะด้าน/เทคนิค) และ Soft Skills (ทักษะสังคม)
-   - ตรวจสอบว่าครบถ้วนและตรงกับความต้องการของตำแหน่งหรือไม่
+ตอบตาม FORMAT นี้เท่านั้น:
 
-5. รูปแบบและโครงสร้าง (Format & Structure)
-   - ตรวจสอบปัญหาที่ทำให้ ATS อ่านไม่ออก เช่น ตาราง, กราฟิก, หลายคอลัมน์, รูปภาพ
-   - ตรวจสอบหัวข้อมาตรฐาน เช่น "ประสบการณ์ทำงาน", "การศึกษา", "ทักษะ", "สรุปประวัติ"
-   - ตรวจสอบข้อมูลติดต่อ: ชื่อ, อีเมล, เบอร์โทรศัพท์, ที่อยู่
-
-การคำนวณคะแนนรวม (0-100):
-┌─────────────────────────────────────────────────────────┐
-│ หมวด           │ น้ำหนัก │ วิธีคำนวณ                   │
-├─────────────────────────────────────────────────────────┤
-│ KEYWORD        │ 35 คะแนน│ (จำนวน keyword ที่ตรงกับ JD  │
-│                │         │  ÷ keyword ทั้งหมดใน JD) × 35│
-├─────────────────────────────────────────────────────────┤
-│ EXPERIENCE     │ 30 คะแนน│ เปรียบเทียบประสบการณ์ที่มี   │
-│                │         │ กับที่ JD ระบุ (ตำแหน่ง,     │
-│                │         │ ระยะเวลา, ความเกี่ยวข้อง)    │
-├─────────────────────────────────────────────────────────┤
-│ EDUCATION      │ 25 คะแนน│ เปรียบเทียบวุฒิ, สาขา,      │
-│                │         │ Certifications กับที่ JD ระบุ│
-├─────────────────────────────────────────────────────────┤
-│ FORMAT_ISSUES  │ 10 คะแนน│ หักตามปัญหา Format ที่พบ    │
-│                │         │ (ไม่มีปัญหา = 10 เต็ม)       │
-└─────────────────────────────────────────────────────────┘
-คะแนนรวม = คะแนน KEYWORD + EXPERIENCE + EDUCATION + FORMAT_ISSUES
-
-ตอบกลับตาม FORMAT นี้เท่านั้น ห้ามเพิ่มข้อความนอก FORMAT:
-
-[SCORE]
-(คะแนนรวม 0-100)
-KEYWORD: (X/35) | EXPERIENCE: (X/30) | EDUCATION: (X/25) | FORMAT: (X/10)
-
-[SCORE]
-(ตัวเลข 0-100 เท่านั้น)
-
-[KEYWORD]
-คำสำคัญที่มี: (รายการ keyword ที่พบในเรซูเม่และตรงกับ JD)
-คำสำคัญที่ขาด: (รายการ keyword ที่อยู่ใน JD แต่ไม่พบในเรซูเม่)
+[RELEVANCE]
+ประเมิน: (สรุปว่าเรซูเม่ตรงกับตำแหน่งมากน้อยแค่ไหน ข้อมูลติดต่อและ Career Summary เป็นอย่างไร)
+จุดแข็ง: (สิ่งที่มีและตรงกับตำแหน่งนี้ดีแล้ว)
+สิ่งที่ขาดหรือควรปรับ: (ข้อมูลหรือส่วนที่ไม่มีแต่ควรมี หรือมีแต่ไม่ควรมี)
 
 [EXPERIENCE]
 ประเมิน: (สรุปประสบการณ์ที่มีและความสอดคล้องกับตำแหน่ง)
-ควรเพิ่มเติม: (ระบุประเภทประสบการณ์ที่ยังขาดและจำเป็นสำหรับตำแหน่งนี้)
-ตัวอย่างประสบการณ์ที่เกี่ยวข้อง:
-- (ตัวอย่างที่ 1 เช่น "เคยรับผิดชอบวิเคราะห์ข้อมูลยอดขายรายเดือนด้วย Python และนำเสนอต่อทีมบริหาร")
-- (ตัวอย่างที่ 2)
-- (ตัวอย่างที่ 3)
+จุดแข็ง: (ประสบการณ์ที่ตรงและน่าประทับใจ)
+ควรปรับปรุง: (ระบุว่าขาดอะไร เช่น ไม่มีตัวเลขผลงาน หน้าที่กว้างเกินไป ไม่ใช้ Active Words)
+ตัวอย่างการเขียนที่ดีกว่า:
+- (เช่น เปลี่ยนจาก "ดูแลงานขาย" → "บริหารทีมขาย 5 คน เพิ่มยอดขาย 25% ภายใน 6 เดือน")
+- (ตัวอย่างที่ 2 ถ้ามี)
 
-[EDUCATION]
-ประเมิน: (สรุปวุฒิการศึกษาและความตรงกับข้อกำหนด)
-สาขาวิชาที่ตำแหน่งนี้ต้องการ: (ระบุสาขาที่เกี่ยวข้องและเป็นที่ต้องการ เช่น วิทยาการคอมพิวเตอร์, สถิติ, วิศวกรรมศาสตร์)
-ทักษะเชิงวิชาการที่ควรมี: (ระบุทักษะหรือความรู้เฉพาะด้านที่งานนี้คาดหวังจากวุฒิการศึกษา เช่น Statistics, Database Design, Financial Modeling)
-
-[FORMAT_ISSUES]
-ปัญหาที่พบ: (ระบุปัญหาด้านรูปแบบที่ ATS อาจอ่านไม่ออก หรือ "ไม่พบปัญหา")
-วิธีแก้ไข:
-- (วิธีแก้ปัญหาที่ 1 เช่น "เปลี่ยน layout จาก 2 คอลัมน์เป็น 1 คอลัมน์เพื่อให้ ATS อ่านได้ถูกต้อง")
-- (วิธีแก้ปัญหาที่ 2 เช่น "แทนที่ progress bar ทักษะด้วยข้อความระบุระดับ เช่น Intermediate, Advanced")
-- (วิธีแก้ปัญหาที่ 3 หากมี)
+[SKILLS]
+ทักษะที่มีและตรงกับ JD: (รายการ)
+ทักษะที่ขาดและควรเพิ่ม: (รายการพร้อมเหตุผล)
+สาขาวิชาหรือความรู้เชิงวิชาการที่ตำแหน่งนี้คาดหวัง: (ระบุ)
+สิ่งที่ควรแก้ไขในส่วนทักษะ: (เช่น มี Progress Bar ควรเปลี่ยนเป็นข้อความ, มีคำคุณศัพท์ลอยๆ ควรเพิ่มหลักฐาน)
 
 [ADVICE]
-สิ่งที่ขาดและทำให้ไม่เหมาะสมกับงานนี้:
-- (ระบุสิ่งที่ขาดชัดเจน เช่น "ขาดประสบการณ์ด้าน Machine Learning ซึ่งเป็นข้อกำหนดหลักของตำแหน่ง")
-- (ระบุสิ่งที่ขาดข้อที่ 2)
-- (ระบุสิ่งที่ขาดข้อที่ 3 หากมี)
-ตัวอย่างวิธีการแก้ไข:
-- (วิธีแก้ที่ 1 เช่น "เพิ่ม Certifications ด้าน Machine Learning เช่น Google ML Certificate หรือ Coursera ML Specialization")
-- (วิธีแก้ที่ 2 เช่น "เพิ่ม Project ส่วนตัวที่ใช้ทักษะที่ขาด เช่น สร้าง Portfolio บน GitHub")
-- (วิธีแก้ที่ 3 หากมี)"""
+คำแนะนำในการปรับปรุงเรซูเม่:
+- (แต่ละข้อควรระบุชัดเจนว่า "ปัจจุบันเป็นอย่างไร" และ "ควรแก้เป็นอย่างไร" พร้อมตัวอย่างถ้าเป็นไปได้)
+- (ใส่ให้ครบตามที่จำเป็น ไม่จำกัดจำนวนข้อ)"""
 
-        # ✅ User Prompt พร้อม Job Description
         user_prompt = f"""กรุณาประเมินเรซูเม่ต่อไปนี้ตามเกณฑ์ ATS โดยเทียบกับรายละเอียดงานที่ให้ไว้
 
 รายละเอียดงาน (Job Description):
@@ -418,36 +357,21 @@ KEYWORD: (X/35) | EXPERIENCE: (X/30) | EDUCATION: (X/25) | FORMAT: (X/10)
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=messages,
             temperature=0.2,
-            max_tokens=1200,
+            max_tokens=2000,
         )
 
         result = response.choices[0].message.content
 
-        # ✅ Parse ผลลัพธ์ตาม FORMAT ใหม่
-        score_match    = re.search(r"\[SCORE\]\s*(\d+)\s*\n.*?KEYWORD:\s*\(?([\d.]+)/35\)?.*?EXPERIENCE:\s*\(?([\d.]+)/30\)?.*?EDUCATION:\s*\(?([\d.]+)/25\)?.*?FORMAT:\s*\(?([\d.]+)/10\)?", result, re.S)
-        keyword_match  = re.search(r"\[KEYWORD\]\s*(.*?)\s*\[EXPERIENCE\]", result, re.S)
-        exp_match      = re.search(r"\[EXPERIENCE\]\s*(.*?)\s*\[EDUCATION\]", result, re.S)
-        edu_match      = re.search(r"\[EDUCATION\]\s*(.*?)\s*\[FORMAT_ISSUES\]", result, re.S)
-        format_match   = re.search(r"\[FORMAT_ISSUES\]\s*(.*?)\s*\[ADVICE\]", result, re.S)
-        advice_match   = re.search(r"\[ADVICE\]\s*(.*)", result, re.S)
-
-        score = int(score_match.group(1).strip()) if score_match else 0
-        verdict = "ผ่านเกณฑ์" if score >= 75 else "ควรทบทวน" if score >= 50 else "ไม่ผ่านเกณฑ์"
+        relevance_match = re.search(r"\[RELEVANCE\]\s*(.*?)\s*\[EXPERIENCE\]", result, re.S)
+        exp_match       = re.search(r"\[EXPERIENCE\]\s*(.*?)\s*\[SKILLS\]", result, re.S)
+        skills_match    = re.search(r"\[SKILLS\]\s*(.*?)\s*\[ADVICE\]", result, re.S)
+        advice_match    = re.search(r"\[ADVICE\]\s*(.*)", result, re.S)
 
         return {
-            "score":          score,
-            "score_breakdown": {
-                "keyword":    float(score_match.group(2)) if score_match else 0,
-                "experience": float(score_match.group(3)) if score_match else 0,
-                "education":  float(score_match.group(4)) if score_match else 0,
-                "format":     float(score_match.group(5)) if score_match else 0,
-            },
-            "keyword":        keyword_match.group(1).strip() if keyword_match else "",
-            "experience":     exp_match.group(1).strip()     if exp_match     else "",
-            "education":      edu_match.group(1).strip()     if edu_match     else "",
-            "format_issues":  format_match.group(1).strip()  if format_match  else "",
-            "advice":         advice_match.group(1).strip()  if advice_match  else "",
-            "verdict":        verdict
+            "relevance":  relevance_match.group(1).strip() if relevance_match else "",
+            "experience": exp_match.group(1).strip()       if exp_match       else "",
+            "skills":     skills_match.group(1).strip()    if skills_match    else "",
+            "advice":     advice_match.group(1).strip()    if advice_match    else "",
         }
 
     except Exception as e:
