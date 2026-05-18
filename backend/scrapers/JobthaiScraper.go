@@ -121,25 +121,81 @@ func SingleScrapingJobthai(keywrd string, page int, index int) (JobCard, error) 
 	return jobthaiCards[index], nil
 }
 
+func sanitizeJobThaiURL(raw string) (string, error) {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", err
+	}
+
+	segments := strings.Split(u.Path, "/")
+	var cleaned []string
+
+	for _, s := range segments {
+		if s != "company" {
+			cleaned = append(cleaned, s)
+		}
+	}
+
+	u.Path = strings.Join(cleaned, "/")
+	return u.String(), nil
+}
+
+func formatJobText(detail, req string) string {
+	var builder strings.Builder
+
+	builder.WriteString("รายละเอียดงาน :\n\n")
+	builder.WriteString(detail)
+	builder.WriteString("\n\n\n")
+
+	builder.WriteString("คุณสมบัติผู้สมัคร :\n\n")
+	builder.WriteString(req)
+
+	return builder.String()
+}
+
 func DetailScrapingJobthai(jobURL string) (string, error) {
-
 	var jobDetail string
+	var jobRequirements string
 
-	c := colly.NewCollector(colly.AllowedDomains("www.jobthai.com", "jobthai.com"))
+	// แปลง URL ก่อน
+	cleanURL, err := sanitizeJobThaiURL(jobURL)
+	if err != nil {
+		return "ไม่พบข้อมูลงาน", fmt.Errorf("invalid JobThai URL: %w", err)
+	}
+
+	c := colly.NewCollector(
+		colly.AllowedDomains("www.jobthai.com", "jobthai.com"),
+	)
 
 	c.OnError(func(_ *colly.Response, err error) {
 		fmt.Printf("JobThai detail scraping error: %v\n", err)
 	})
 
-	c.OnHTML("div#content-section", func(h *colly.HTMLElement) {
-		jobDetail = strings.TrimSpace(h.Text)
+	c.OnHTML("span#job-detail", func(h *colly.HTMLElement) {
+		jobDetail = h.Text
 	})
 
-	// fmt.Println("Visiting JobThai job detail page: " + jobDetail)
+	c.OnHTML("div#job-properties-wrapper ol", func(h *colly.HTMLElement) {
+		var builder strings.Builder
 
-	err := c.Visit(jobURL)
+		h.ForEach("li", func(_ int, el *colly.HTMLElement) {
+			text := strings.TrimSpace(el.Text)
+			if text != "" {
+				builder.WriteString("- ")
+				builder.WriteString(text)
+				builder.WriteString("\n")
+			}
+		})
+
+		jobRequirements = builder.String()
+	})
+
+	fmt.Println("Visiting JobThai job detail page:", cleanURL)
+
+	err = c.Visit(cleanURL)
 	if err != nil {
 		return "ไม่พบข้อมูลงาน", fmt.Errorf("failed to visit JobThai job detail: %w", err)
 	}
-	return jobDetail, nil
+
+	return formatJobText(jobDetail, jobRequirements), nil
 }

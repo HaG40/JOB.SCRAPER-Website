@@ -13,7 +13,7 @@ function JobSelector() {
   const hasJob1 = jobBox1 && Object.keys(jobBox1).length > 0;
 
   return (
-    <div className="px-4 py-2 flex flex-col gap-4">
+    <div className="px-4 py-4 flex flex-col gap-4">
 
       {/* ── Job Card ── */}
       {hasJob1 && (

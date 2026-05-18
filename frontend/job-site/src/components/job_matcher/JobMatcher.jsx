@@ -67,7 +67,7 @@ function JobMatcher() {
         <div className="w-xl flex flex-col rounded-2xl border border-gray-100 shadow-sm bg-white overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100">
             <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">
-              การวิเคราะห์ ATS
+              การวิเคราะห์ความเหมาะสม
             </p>
             <h1 className="text-base font-semibold text-orange-500 mt-0.5">
               📊 ความเหมาะสมกับคุณ
