@@ -90,14 +90,13 @@ function JobDetail() {
   }
 
   return (
-    <textarea
-      ref={textareaRef}
-      readOnly
-      value={jobDetail.detail}
-      className="w-full resize-none overflow-hidden rounded-xl border border-gray-100
-                 bg-gray-50 px-4 py-3 text-sm text-gray-600 leading-relaxed
-                 shadow-sm focus:outline-none"
-    />
+    <div className="overflow-y-auto max-h-[51.6vh] rounded-xl border border-gray-100
+                    bg-gray-50 shadow-sm
+                    scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+      <p className="px-4 py-3 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+        {jobDetail.detail}
+      </p>
+    </div>
   );
 }
 

@@ -27,17 +27,13 @@ function JobMatcher() {
   return (
     <JobCompareContext1.Provider value={{ jobBox1, setJobBox1, detail, setDetail }}>
       <div className="mx-auto flex flex-row justify-center items-start gap-5 mt-10 px-4">
-
-        {/* ── Left: Job Source ── */}
         <div className="shrink-0 flex flex-col rounded-2xl border border-gray-100 shadow-sm bg-white overflow-hidden">
-
-          {/* Tab header */}
           <div className="flex border-b border-gray-100">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={changeTab.bind(null, tab.key)}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors cursor-pointer
                   ${activeTab === tab.key
                     ? "text-orange-500 border-b-2 border-orange-400 bg-orange-50/50"
                     : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"

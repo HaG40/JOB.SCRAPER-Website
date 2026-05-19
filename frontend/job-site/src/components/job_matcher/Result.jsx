@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext } from "react";
 import { JobCompareContext1 } from "./JobMatcher";
 import { UserContext } from "../../App";
 
@@ -10,34 +10,23 @@ const initialState = {
   relevance:  "",
   experience: "",
   skills:     "",
-  advice:     "",
 };
 
 const DETAIL_FIELDS = [
   { key: "relevance",  label: "🎯 ความตรงกับตำแหน่ง" },
   { key: "experience", label: "💼 ประสบการณ์ทำงาน" },
   { key: "skills",     label: "🛠️ ทักษะและการศึกษา" },
-  { key: "advice",     label: "📝 ข้อสรุป" },
 ];
 
 function formatAIText(raw = "") {
   if (!raw) return "";
 
   let text = raw.trim();
-
-  // ตัด ** ด้านหน้า
   text = text.replace(/^\*\*\s*/, "");
-
-  // ตัด ##** ด้านท้าย
-  text = text.replace(/\s*##\s*\*\*\s*$/, "");
-
-  // แปลง **text** เป็น bold
+  text = text.replace(/\s*###\s*\*\*\s*$/, "");
+  text = text.replace(/###\s*$/, "");
   text = text.replace(/\*\*(.*?)\*\*/g, `<span class="font-semibold">$1</span>`);
-
-  // ลบ * ที่เหลือ
   text = text.replace(/\*/g, "");
-
-  // newline → <br/>
   text = text.replace(/\n/g, "<br/>");
 
   return text;
@@ -50,12 +39,28 @@ function DetailField({ label, value, loading }) {
 
       <div
         className="w-full rounded-xl border border-gray-100
-                   bg-gray-50 px-4 py-3 text-sm text-gray-700 leading-relaxed
-                   shadow-sm whitespace-normal"
-        dangerouslySetInnerHTML={{
-          __html: loading ? LOADING_TEXT : formatAIText(value),
-        }}
-      />
+                  bg-gray-50 px-4 py-3 text-sm text-gray-700 leading-relaxed
+                  shadow-sm whitespace-normal"
+      >
+        {loading && (
+          <div className="flex justify-start items-center gap-3 text-center">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-200 border-t-orange-400 mt-1" />
+            <div
+              dangerouslySetInnerHTML={{
+                __html: LOADING_TEXT,
+              }}
+            />
+          </div>
+        )}
+
+        {!loading && (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: formatAIText(value),
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -68,14 +73,15 @@ export default function Result() {
   const [loading, setLoading] = useState(false);
 
   const hasJob  = jobBox1 && Object.keys(jobBox1).length > 0;
-  const isReady = hasJob && !!detail;
+  const isReady = hasJob && detail;
+
+    const [firstSearch, setFirstSearch] = useState(true);
 
   const base64ToFile = (base64, filename) => {
     const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
     return new File([bytes], filename, { type: "application/pdf" });
   };
 
-  // ✅ reset เมื่อเงื่อนไขไม่ครบ
   useEffect(() => {
     if (!isReady) {
       setResult(initialState);
@@ -83,16 +89,14 @@ export default function Result() {
     }
   }, [isReady]);
 
-  // ✅ fetch เมื่อครบทุกเงื่อนไข
   useEffect(() => {
     if (!isReady || !user?.cv) return;
-    setResult({});
     matchResumeWithJob();
   }, [detail, jobBox1]);
 
   const matchResumeWithJob = async () => {
     setResult({});
-    if(result && Object.keys(result).length > 0) return; // ป้องกันเรียกซ้ำ
+    // if(result && Object.keys(result).length > 0 && !firstSearch) return; // ป้องกันเรียกซ้ำ
     try {
       setLoading(true);
       const file = base64ToFile(user.cv, "resume.pdf");
@@ -108,12 +112,12 @@ export default function Result() {
         relevance:  data.relevance  ?? "",
         experience: data.experience ?? "",
         skills:     data.skills     ?? "",
-        advice:     data.advice     ?? "",
       });
     } catch (err) {
       console.error("Match error:", err);
     } finally {
       setLoading(false);
+      firstSearch && setFirstSearch(false);
     }
   };
 
@@ -150,15 +154,19 @@ export default function Result() {
 
   // ── Result ────────────────────────────────────────────────────
   return (
-    <div className="px-4 pb-8 pt-4 space-y-4 bg-white">
-      {DETAIL_FIELDS.map(({ key, label }) => (
-        <DetailField
-          key={key}
-          label={label}
-          value={result[key]}
-          loading={loading}
-        />
-      ))}
+    <div className="flex flex-col h-full">
+      <div className="overflow-y-auto flex-1 max-h-[76.6vh] px-4 pb-8 pt-4 space-y-4
+                      scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+        {DETAIL_FIELDS.map(({ key, label }) => (
+          <DetailField
+            key={key}
+            label={label}
+            value={result[key]}
+            loading={loading}
+          />
+        ))}
+      </div>
+
     </div>
   );
 }

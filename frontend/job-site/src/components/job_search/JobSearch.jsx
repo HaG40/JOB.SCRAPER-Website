@@ -16,9 +16,10 @@ function JobSearch() {
   const [addedJobs, setAddedJobs]   = useState([]);
   const [jobSelected, setJobSelected] = useState(false);
 
+
   const { isAuthenticated }       = useContext(AuthContext);
   const { user }                  = useContext(UserContext);
-  const { jobBox1, setJobBox1 }   = useContext(JobCompareContext1);
+  const { jobBox1, setJobBox1, setDetail }   = useContext(JobCompareContext1);
 
   const handleSelect = (job) => {
     if (!jobBox1 || Object.keys(jobBox1).length === 0) {
@@ -41,6 +42,7 @@ function JobSearch() {
     setJobSelected(false);
     toast.info("นำงานออกแล้ว");
     setJobBox1({});
+    setDetail(null);
   };
 
   const isAdded = (job) =>
@@ -48,6 +50,7 @@ function JobSearch() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setJobBox1({});
     await fetchResults(1);
   };
 
@@ -55,7 +58,7 @@ function JobSearch() {
     setIsLoading(true);
     document.body.style.cursor = 'progress';
 
-    const cacheKey = `${kw}|${targetPage}|${source}`;
+    const cacheKey = `${kw}|${targetPage}|${source},${onlyBKK}`;
     if (cache[cacheKey]) {
       setResults(cache[cacheKey]);
       setPage(targetPage);
@@ -123,7 +126,7 @@ function JobSearch() {
             type="submit"
             disabled={isLoading}
             className="shrink-0 bg-orange-400 hover:bg-orange-500 text-white
-                       text-sm px-4 py-2 rounded-xl shadow-sm
+                       text-sm px-4 py-2 rounded-xl shadow-sm cursor-pointer
                        disabled:opacity-50 disabled:cursor-progress transition-colors"
           >
             ค้นหา
@@ -139,7 +142,7 @@ function JobSearch() {
               onChange={(e) => setSource(e.target.value)}
               disabled={isLoading}
               className="border border-gray-100 bg-gray-50 rounded-lg px-2 py-1
-                         text-sm text-gray-600 shadow-sm focus:outline-none"
+                         text-sm text-gray-600 shadow-sm focus:outline-none cursor-pointer"
             >
               <option value="all">ทั้งหมด</option>
               <option value="jobbkk">JobBKK.com</option>
@@ -153,7 +156,7 @@ function JobSearch() {
               checked={onlyBKK}
               onChange={(e) => setOnlyBKK(e.target.checked)}
               disabled={isLoading}
-              className="h-3.5 w-3.5 accent-orange-400"
+              className="h-3.5 w-3.5 accent-orange-300"
             />
             ภายในกรุงเทพฯ
           </label>
@@ -164,7 +167,7 @@ function JobSearch() {
       <div className="h-px bg-gray-100 my-4" />
 
       {/* Results header */}
-      <div className="flex justify-between items-center mb-3">
+            <div className="flex justify-between items-center mb-3">
         <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">
           ผลการค้นหา
         </p>
@@ -181,6 +184,7 @@ function JobSearch() {
         </div>
       )}
 
+      {/* Empty */}
       {!isLoading && results.length === 0 && (
         <div className="flex flex-col items-center py-10 gap-2">
           <span className="text-2xl">🔍</span>
@@ -188,9 +192,13 @@ function JobSearch() {
         </div>
       )}
 
+      {/* Results */}
       {!isLoading && results.length > 0 && (
-        <>
-          <div className="space-y-3">
+        <div className="flex flex-col gap-3">
+
+          {/* Scrollable job list */}
+          <div className="overflow-y-auto max-h-[60vh] pr-1 space-y-3
+                          scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
             {results.map((job, index) => {
               const added = isAdded(job);
               return (
@@ -273,8 +281,8 @@ function JobSearch() {
             })}
           </div>
 
-          {/* Pagination */}
-          <div className="flex justify-between items-center mt-5">
+          {/* Pagination — อยู่นอก scroll area เสมอ */}
+          <div className="flex justify-between items-center pt-2 border-t border-gray-100">
             <button
               onClick={() => fetchResults(page - 1)}
               disabled={page <= 1 || isLoading}
@@ -293,10 +301,11 @@ function JobSearch() {
               ถัดไป →
             </button>
           </div>
-        </>
+
+        </div>
       )}
     </div>
-  );
+    );
 }
 
 export default JobSearch;

@@ -60,9 +60,9 @@ function SendCVToPython() {
       </>
       :
       <>
-        <div className="flex flex-row items-center justify-center mt-10 gap-2">
-          <p className="animate-spin rounded-full h-4 w-4 border-t-white border border-gray-500 ml-2"></p>
-          <p className="text-gray-500">กำลังวิเคราะห์...</p>
+        <div className="flex flex-col items-center py-10 gap-3">
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-200 border-t-orange-400" />
+          <p className="text-sm text-gray-400">กำลังวิเคราะห์...</p>
         </div>
       </>
       }

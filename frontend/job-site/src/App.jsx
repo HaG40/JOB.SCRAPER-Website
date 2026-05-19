@@ -9,8 +9,6 @@ import { ToastContainer } from 'react-toastify';
 import { useEffect, useState, createContext } from 'react';
 import calculateAge from "./utils/CalculateAge";
 
-import ChatSidebar from './components/chat_bot/ChatSidebar';
-import { ChatProvider } from './components/chat_bot/ChatContext';
 import JobMatcher from './components/job_matcher/JobMatcher';
 
 export const AuthContext = createContext();
@@ -104,11 +102,11 @@ function App() {
       <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
         <UserContext.Provider value={{ user, setUser }}>
           <Routes>
+            <Route path='/' element={<JobMatcher/>}/>
             <Route path="/user/login" element={<LoginPage />} />
             <Route path="/user/register" element={<RegisterPage />} />
             <Route path="/user" element={<UserPage />} />
             <Route path='/user/view' element={<ViewUserPage/>}/>
-            <Route path='/' element={<JobMatcher/>}/>
             <Route path="/user/logout" element={<Logout />} />
           </Routes>
         </UserContext.Provider>
