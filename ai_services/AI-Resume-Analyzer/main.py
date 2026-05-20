@@ -16,6 +16,9 @@ from io import BytesIO
 from pydantic import BaseModel
 import base64
 from fastapi import Body
+from fastapi import UploadFile, File, Form
+from pdf2image import convert_from_bytes
+import base64, io, re
 
 pytesseract.pytesseract.tesseract_cmd = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
 
@@ -171,10 +174,6 @@ IDF (Inverse Document Frequency): คำเฉพาะทางมีค่า�
         "reply": ",".join(jobs),
         "jobs": jobs,
     })
-
-from fastapi import UploadFile, File, Form
-from pdf2image import convert_from_bytes
-import base64, io, re
 
 @app.options("/match")
 async def preflight():

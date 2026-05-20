@@ -1,6 +1,8 @@
-streamlit
-pdfminer.six
-sentence-transformers
-scikit-learn
+fastapi
+uvicorn
 groq
 python-dotenv
+pillow
+pdf2image
+pytesseract
+pydantic
