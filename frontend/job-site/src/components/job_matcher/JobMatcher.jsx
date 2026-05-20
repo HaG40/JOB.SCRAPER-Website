@@ -12,16 +12,16 @@ const TABS = [
 ];
 
 function JobMatcher() {
-  const [jobBox1, setJobBox1]   = useState(null);
-  const [detail, setDetail]     = useState(null);
+  const [jobBox1, setJobBox1] = useState({});
+  const [detail, setDetail]   = useState("");
   const [activeTab, setActiveTab] = useState("recommend");
 
   const changeTab = (tabKey) => {
     setJobBox1({});
-    setDetail(null);
+    setDetail("");  
     setActiveTab(tabKey);
-    setJobBox1(null);
-    setDetail(null);
+    setJobBox1({});
+    setDetail("");
   }
 
   return (
