@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { toast } from 'react-toastify';
-import { GO_API } from "../utils/api";
+import { GO_API } from "../../utils/api";
 
 
 function Logout(){

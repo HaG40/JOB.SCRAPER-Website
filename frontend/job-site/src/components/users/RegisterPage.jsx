@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { GO_API } from '../utils/api';
+import { GO_API } from '../../utils/api';
 
 function RegisterPage() {
 
