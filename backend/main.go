@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/rs/cors"
-
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -27,12 +26,23 @@ func main() {
 		AllowedOrigins: []string{
 			"https://job-scraper-frontend-fawn.vercel.app",
 		},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods: []string{
+			"GET",
+			"POST",
+			"PUT",
+			"DELETE",
+			"OPTIONS",
+		},
+		AllowedHeaders: []string{
+			"Content-Type",
+			"Authorization",
+		},
 		AllowCredentials: true,
-		AllowedHeaders:   []string{"*"},
+		Debug:            true,
 	})
 
 	handler := c.Handler(http.DefaultServeMux)
 
+	log.Println("Running on port", port)
 	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
