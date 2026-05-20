@@ -25,6 +25,7 @@ func main() {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"https://job-scraper-frontend-fawn.vercel.app",
+			"https://job-scraper-frontend-fawn.vercel.app/", // --- IGNORE ---
 		},
 		AllowedMethods: []string{
 			"GET",
