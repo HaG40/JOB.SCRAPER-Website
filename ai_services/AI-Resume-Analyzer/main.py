@@ -366,3 +366,7 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
     except Exception as e:
         print("MATCH ERROR:", e)
         return JSONResponse({"error": str(e)}, status_code=500)
+    
+@app.get("/")
+def root():
+    return {"status": "ok"}
