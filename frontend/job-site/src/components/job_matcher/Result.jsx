@@ -22,8 +22,8 @@ const DETAIL_FIELDS = [
 const GLOSSARY = {
   "Career Summary/Objective": "สรุปย่อประวัติและเป้าหมายอาชีพ 2-3 บรรทัด ตอบคำถาม 'ทำไมบริษัทถึงควรจ้างคุณ?' วางไว้ต้นเรซูเม่",
   "Reverse Chronological":    "เรียงประสบการณ์จากล่าสุดไปเก่าสุด รูปแบบที่ HR นิยมและ ATS อ่านได้ดีที่สุด",
-  "Career Summary":           "สรุปย่อประวัติและเป้าหมาย 2-3 บรรทัด ตอบว่า 'ทำไมบริษัทถึงควรจ้างคุณ?' วางไว้ต้นเรซูเม่",
-  "Career Objective":         "ระบุเป้าหมายในอาชีพ เหมาะสำหรับผู้เพิ่งจบหรือเปลี่ยนสายงาน วางไว้ต้นเรซูเม่",
+  "Career Summary":           "สรุปย่อประวัติและเป้าหมาย 2-3 บรรทัด ตอบว่า 'ทำไมบริษัทถึงควรจ้างคุณ?'",
+  "Career Objective":         "ระบุเป้าหมายในอาชีพ เหมาะสำหรับผู้เพิ่งจบหรือเปลี่ยนสายงาน",
   "Certifications":           "ใบรับรองจากองค์กรที่ได้รับการยอมรับ ยืนยันความสามารถเฉพาะด้านของผู้สมัคร",
   "Active Words":             "คำกริยาแสดงการกระทำและความสำเร็จ เช่น Developed, Managed, Achieved ทำให้ประสบการณ์ดูมีพลัง",
   "ATS":                      "Applicant Tracking System — ระบบที่บริษัทใช้คัดกรองเรซูเม่อัตโนมัติก่อนถึงมือ HR",
@@ -47,7 +47,7 @@ function GlossaryTooltip({ term, definition }) {
         ref={ref}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setVisible(false)}
-        className="text-blue-600 font-medium cursor-help
+        className="text-blue-500 font-medium cursor-help
                    hover:underline underline-offset-2"
       >
         {term}
