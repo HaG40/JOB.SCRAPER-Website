@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/rs/cors"
+
 	"github.com/joho/godotenv"
 )
 
@@ -21,6 +23,7 @@ func main() {
 
 	router.SetUpRoutes()
 
-	log.Println("Server running on port", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	handler := cors.AllowAll().Handler(http.DefaultServeMux)
+
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
