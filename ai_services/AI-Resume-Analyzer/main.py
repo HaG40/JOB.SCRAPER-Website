@@ -1,6 +1,4 @@
 # main.py
-# activate && conda activate base
-# uvicorn main:app --reload --port 5000
 
 from fastapi import FastAPI, File, Response, UploadFile, Form
 from fastapi.responses import JSONResponse
@@ -9,21 +7,25 @@ from groq import Groq
 from dotenv import load_dotenv
 from PIL import Image
 from pdf2image import convert_from_bytes
+from pydantic import BaseModel
+from io import BytesIO
+
 import pytesseract
 import os
 import re
-from io import BytesIO
-from pydantic import BaseModel
 import base64
-from fastapi import Body
-from fastapi import UploadFile, File, Form
-from pdf2image import convert_from_bytes
-import base64, io, re
 
-pytesseract.pytesseract.tesseract_cmd = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
+# =========================
+# ENV
+# =========================
 
 load_dotenv()
+
 API_KEY = os.getenv("GROQ_API_KEY")
+
+# =========================
+# APP
+# =========================
 
 app = FastAPI(title="AI Resume Analyzer API")
 
@@ -39,82 +41,144 @@ app.add_middleware(
 
 client = Groq(api_key=API_KEY)
 
-conversation_history = []
-resume_uploaded = False
-resume_cache = ""
-interview_history = []
+# =========================
+# MODELS
+# =========================
 
-def extract_text(uploaded_file) -> str:
-    """Extract text from PDF or Image using OCR"""
-    try:
-        filename = uploaded_file.filename.lower()
-        uploaded_file.file.seek(0)
-        content = uploaded_file.file.read()
-
-        if filename.endswith(".pdf"):
-            images = convert_from_bytes(content, poppler_path=r"C:/Program Files/poppler-25.07.0/Library/bin")
-            text = ""
-            for img in images:
-                text += pytesseract.image_to_string(img, lang="eng+tha") + "\n"
-            return text.strip()
-
-        elif filename.endswith((".png", ".jpg", ".jpeg")):
-            image = Image.open(BytesIO(content))
-            text = pytesseract.image_to_string(image, lang="eng+tha")
-            return text.strip()
-
-        else:
-            return "❌ Unsupported file format"
-
-    except Exception as e:
-        return f"❌ Error extracting text: {str(e)}"
-
-def extract_scores(text: str):
-    pattern = r'(\d+(?:\.\d+)?)%'
-    matches = re.findall(pattern, text)
-    return [float(m) for m in matches]
-
-def file_to_base64(file: UploadFile) -> str:
-    """
-    แปลง UploadFile เป็น Base64
-    - PDF (หน้าเดียว) → JPG → Base64 string
-    - JPG/PNG → Base64 string
-    """
-    content_type = file.content_type
-    file_bytes = file.file.read()
-    file.file.close()
-
-    if content_type == "application/pdf":
-        images = convert_from_bytes(
-            file_bytes,
-            poppler_path=r"C:/Program Files/poppler-25.07.0/Library/bin"
-        )
-        img = images[0]
-        buffer = BytesIO()
-        img.save(buffer, format="JPEG")
-        base64_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
-        return base64_str
-
-    elif content_type in ["image/jpeg", "image/jpg", "image/png"]:
-        return base64.b64encode(file_bytes).decode("utf-8")
-    else:
-        raise ValueError("ไฟล์ต้องเป็น PDF, JPG หรือ PNG เท่านั้น")
 class ChatRequest(BaseModel):
     message: str
 
+# =========================
+# HELPERS
+# =========================
+
+def extract_text(uploaded_file) -> str:
+    """
+    Extract text from PDF or image using OCR
+    """
+
+    try:
+        filename = uploaded_file.filename.lower()
+
+        uploaded_file.file.seek(0)
+        content = uploaded_file.file.read()
+
+        # PDF
+        if filename.endswith(".pdf"):
+
+            images = convert_from_bytes(content)
+
+            text = ""
+
+            for img in images:
+                text += pytesseract.image_to_string(
+                    img,
+                    lang="eng+tha"
+                ) + "\n"
+
+            return text.strip()
+
+        # IMAGE
+        elif filename.endswith((".png", ".jpg", ".jpeg")):
+
+            image = Image.open(BytesIO(content))
+
+            text = pytesseract.image_to_string(
+                image,
+                lang="eng+tha"
+            )
+
+            return text.strip()
+
+        return "Unsupported file format"
+
+    except Exception as e:
+        return f"Error extracting text: {str(e)}"
+
+
+def extract_scores(text: str):
+
+    pattern = r'(\d+(?:\.\d+)?)%'
+    matches = re.findall(pattern, text)
+
+    return [float(m) for m in matches]
+
+
+def file_to_base64(file: UploadFile) -> str:
+    """
+    Convert UploadFile -> Base64
+    Supports:
+    - PDF
+    - JPG
+    - PNG
+    """
+
+    content_type = file.content_type
+
+    file.file.seek(0)
+    file_bytes = file.file.read()
+
+    # PDF
+    if content_type == "application/pdf":
+
+        images = convert_from_bytes(file_bytes)
+
+        img = images[0]
+
+        buffer = BytesIO()
+
+        img.save(buffer, format="JPEG")
+
+        return base64.b64encode(
+            buffer.getvalue()
+        ).decode("utf-8")
+
+    # IMAGE
+    elif content_type in [
+        "image/jpeg",
+        "image/jpg",
+        "image/png"
+    ]:
+
+        return base64.b64encode(
+            file_bytes
+        ).decode("utf-8")
+
+    raise ValueError(
+        "ไฟล์ต้องเป็น PDF, JPG หรือ PNG เท่านั้น"
+    )
+
+# =========================
+# ROOT
+# =========================
+
+@app.get("/")
+def root():
+    return {
+        "status": "ok"
+    }
+
+# =========================
+# RECOMMEND JOB BY CV
+# =========================
 
 @app.post("/recommend/cv")
-async def recommend_job_by_cv(resume_file: UploadFile = File(...)):
-    global conversation_history
+async def recommend_job_by_cv(
+    resume_file: UploadFile = File(...)
+):
 
-    resume_file.file.seek(0)
-    resume_text = extract_text(resume_file)
+    try:
 
-    resume_file.file.seek(0)
-    base64_image = file_to_base64(resume_file)
+        resume_file.file.seek(0)
 
-    prompt = """📝 ขั้นตอนการวิเคราะห์:
+        resume_text = extract_text(resume_file)
 
+        resume_file.file.seek(0)
+
+        base64_image = file_to_base64(resume_file)
+
+        prompt = """ขั้นตอนการวิเคราะห์:
+        
 อ่านเรซูเม่/CV ที่ให้มาอย่างละเอียด
 แยกข้อความเรซูเม่ออกเป็นหน่วยคำ (tokenization) และทำความสะอาดข้อความ (lowercase, remove stopwords, normalize)
 คำนวณน้ำหนักของทุกคำสำคัญด้วยหลัก TF-IDF โดย:
@@ -134,49 +198,72 @@ IDF (Inverse Document Frequency): คำเฉพาะทางมีค่า�
 ตอบเฉพาะชื่อตำแหน่งงาน 5 อันดับเท่านั้น
 คั่นด้วยเครื่องหมายจุลภาค (,)
 ห้ามอธิบาย ห้ามใส่หมายเลข ห้ามใส่ข้อความอื่นใดทั้งสิ้น
-ตัวอย่างรูปแบบ: Data Analyst,Python Developer,Business Intelligence,Data Engineer,Machine Learning Engineer
-"""
+ตัวอย่างรูปแบบ: Data Analyst,Python Developer,Business Intelligence,Data Engineer,Machine Learning Engineer"""
 
-    answer = client.chat.completions.create(
-        model="meta-llama/llama-4-scout-17b-16e-instruct",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "คุณคือ HR AI Analyzer ที่เชี่ยวชาญการวิเคราะห์ Keyword จากเรซูเม่ "
-                    "และจับคู่กับตำแหน่งงานที่เหมาะสมที่สุดตามน้ำหนักของ Keyword"
-                )
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{base64_image}",
+        answer = client.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[
+                {
+                    "role": "system",
+                    "content":
+                        "คุณคือ AI วิเคราะห์เรซูเม่ "
+                        "และแนะนำตำแหน่งงานที่เหมาะสม"
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text":
+                                f"{prompt}\n\n"
+                                f"Resume Text:\n{resume_text}"
                         },
-                    },
-                ],
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url":
+                                    f"data:image/jpeg;base64,{base64_image}"
+                            }
+                        }
+                    ]
+                }
+            ],
+            temperature=0.1,
+            max_tokens=1200,
+        )
+
+        response = answer.choices[0].message.content.strip()
+
+        jobs = [
+            j.strip()
+            for j in response.split(",")
+            if j.strip()
+        ]
+
+        jobs = jobs[:5]
+
+        return JSONResponse({
+            "reply": ",".join(jobs),
+            "jobs": jobs,
+        })
+
+    except Exception as e:
+
+        return JSONResponse(
+            {
+                "error": str(e)
             },
-        ],
-        temperature=0.1,
-        max_tokens=200,
-    )
+            status_code=500
+        )
 
-    response = answer.choices[0].message.content.strip()
-
-    jobs = [j.strip() for j in response.split(",") if j.strip()]
-    jobs = jobs[:5]
-
-    return JSONResponse({
-        "reply": ",".join(jobs),
-        "jobs": jobs,
-    })
+# =========================
+# MATCH
+# =========================
 
 @app.options("/match")
 async def preflight():
     return Response(status_code=200)
+
 
 @app.post("/match")
 async def match(
@@ -184,36 +271,58 @@ async def match(
     job_title: str = Form(...),
     job_detail: str = Form(...)
 ):
+
     try:
+
         file_bytes = await resume_file.read()
+
         content_type = resume_file.content_type
 
-        # ✅ รองรับทั้ง PDF และ Image
+        # PDF
         if content_type == "application/pdf":
+
             pages = convert_from_bytes(
                 file_bytes,
-                dpi=300,
-                poppler_path=r"C:/Program Files/poppler-25.07.0/Library/bin"
+                dpi=300
             )
+
             images = pages
 
-        elif content_type in ["image/jpeg", "image/png", "image/jpg"]:
-            images = [Image.open(BytesIO(file_bytes))]
+        # IMAGE
+        elif content_type in [
+            "image/jpeg",
+            "image/png",
+            "image/jpg"
+        ]:
+
+            images = [
+                Image.open(BytesIO(file_bytes))
+            ]
 
         else:
+
             return JSONResponse(
-                {"error": f"Unsupported file type: {content_type}"},
+                {
+                    "error":
+                        f"Unsupported file type: {content_type}"
+                },
                 status_code=400
             )
 
-        # ✅ แปลงทุกหน้าเป็น base64
         images_base64 = []
-        for img in images:
-            buf = BytesIO()
-            img.save(buf, format="JPEG")
-            images_base64.append(base64.b64encode(buf.getvalue()).decode())
 
-        # ✅ System Prompt แบบ ATS ภาษาไทย
+        for img in images:
+
+            buf = BytesIO()
+
+            img.save(buf, format="JPEG")
+
+            images_base64.append(
+                base64.b64encode(
+                    buf.getvalue()
+                ).decode()
+            )
+
         system_prompt = """คุณคือที่ปรึกษาด้านเรซูเม่มืออาชีพ วิเคราะห์เรซูเม่เทียบกับ JD ที่ให้มา ให้คำแนะนำเชิงลึกที่ปฏิบัติได้จริง ไม่ให้คะแนน ไม่วิเคราะห์ Format/รูปแบบเอกสาร
 
 === หลักการเขียนเรซูเม่ที่ดี (Jobsdb Thailand) ===
@@ -309,7 +418,8 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
 [SUMMARY]
 ความเหมาะสม: ✅ เหมาะสม / ❌ ไม่เหมาะสม
 📌 เหตุผล: ...
-(ไม่ต้องสรุปภาพรวม)"""
+(ไม่ต้องสรุปภาพรวม)
+"""
 
         user_prompt = f"""กรุณาประเมินเรซูเม่ต่อไปนี้ตามเกณฑ์โดยเทียบกับรายละเอียดงานที่ให้ไว้
 
@@ -327,12 +437,16 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": user_prompt},
+                    {
+                        "type": "text",
+                        "text": user_prompt
+                    },
                     *[
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/jpeg;base64,{img}"
+                                "url":
+                                    f"data:image/jpeg;base64,{img}"
                             }
                         }
                         for img in images_base64
@@ -345,27 +459,22 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=messages,
             temperature=0.2,
-            max_tokens=2000,
+            max_tokens=1200,
         )
 
         result = response.choices[0].message.content
 
-        relevance_match = re.search(r"\[RELEVANCE\]\s*(.*?)\s*\[EXPERIENCE\]", result, re.S)
-        exp_match       = re.search(r"\[EXPERIENCE\]\s*(.*?)\s*\[SKILLS\]", result, re.S)
-        skills_match    = re.search(r"\[SKILLS\]\s*(.*?)\s*\[SUMMARY\]", result, re.S)
-        summary_match   = re.search(r"\[SUMMARY\]\s*(.*)", result, re.S)
-
         return {
-            "relevance":  relevance_match.group(1) if relevance_match else "",
-            "experience": exp_match.group(1)       if exp_match       else "",
-            "skills":     skills_match.group(1) + "\n"    if skills_match    else "",
-            "summary":    summary_match.group(1) if summary_match else "",
+            "response": result
         }
 
     except Exception as e:
+
         print("MATCH ERROR:", e)
-        return JSONResponse({"error": str(e)}, status_code=500)
-    
-@app.get("/")
-def root():
-    return {"status": "ok"}
+
+        return JSONResponse(
+            {
+                "error": str(e)
+            },
+            status_code=500
+        )
