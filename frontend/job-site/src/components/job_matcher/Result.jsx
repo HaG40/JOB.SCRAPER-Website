@@ -185,9 +185,9 @@ export default function Result() {
   }, [detail, jobBox1]);
 
   const matchResumeWithJob = async () => {
-    setResult({});
     try {
       setLoading(true);
+      setResult({});
       const file     = base64ToFile(user.cv, "resume.pdf");
       const formData = new FormData();
       formData.append("resume_file", file);
