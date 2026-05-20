@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { GO_API } from '../utils/api';
 
 function RegisterPage() {
 
@@ -17,7 +18,7 @@ function RegisterPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-       const res = await fetch("http://localhost:8888/api/register", {
+       const res = await fetch(`${GO_API}/register`, {
             method : "POST",
             headers: {"Content-Type" : "application/json"},
             body: JSON.stringify({

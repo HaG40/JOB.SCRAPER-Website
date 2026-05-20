@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useContext } from 'react';
 import { UserContext } from '../../App';
+import { GO_API } from '../../utils/api';
 
 function CVViewer() {
   const [cvUrl, setCvUrl] = useState(null);
     const { user } = useContext(UserContext);
 
   useEffect(() => {
-    const url = `http://localhost:8888/api/user/cv?id=${user.id}`;
+    const url = `${GO_API}/user/cv?id=${user.id}`;
     setCvUrl(url);
   }, [user.id]);
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import { JobCompareContext1 } from "./JobMatcher";
 import { UserContext } from "../../App";
+import { AI_API } from "../../utils/api";
 
 const LOADING_TEXT = "กำลังวิเคราะห์...";
 
@@ -193,7 +194,7 @@ export default function Result() {
       formData.append("job_title", jobBox1.title);
       formData.append("job_detail", detail);
 
-      const res  = await fetch("http://localhost:5000/match", { method: "POST", body: formData });
+      const res  = await fetch(`${AI_API}/match`, { method: "POST", body: formData });
       const data = await res.json();
 
       setResult({

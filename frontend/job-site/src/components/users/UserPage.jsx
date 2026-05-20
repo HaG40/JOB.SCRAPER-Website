@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext, UserContext } from '../../App';
 import FavoriteButton from '../job_search/FavoriteButton';
 import UserBox from './UserBox';
+import { GO_API } from '../../utils/api';
 
 function UserPage() {
     const { isAuthenticated } = useContext(AuthContext);
@@ -13,7 +14,7 @@ function UserPage() {
     
     const fetchFavorites = async () => {
         try {
-        const res = await fetch(`http://localhost:8888/api/jobs/favorite?userId=${user.id}`, {
+        const res = await fetch(`${GO_API}/jobs/favorite?userId=${user.id}`, {
             credentials: "include"
         })
         const data = await res.json();

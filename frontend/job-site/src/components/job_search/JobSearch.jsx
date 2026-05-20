@@ -4,6 +4,7 @@ import { JobCompareContext1 } from '../job_matcher/JobMatcher';
 import FavoriteButton from './FavoriteButton';
 import { FaSearch, FaPlus, FaMinus } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { GO_API } from '../../utils/api';
 
 function JobSearch() {
   const [keyword, setKeyword]   = useState('');
@@ -75,7 +76,7 @@ function JobSearch() {
     });
 
     try {
-      const res = await fetch(`http://localhost:8888/api/jobs?${params.toString()}`);
+      const res = await fetch(`${GO_API}/jobs?${params.toString()}`);
       if (!res.ok) throw new Error('Something went wrong');
       const data = await res.json();
       setCache((prev) => ({ ...prev, [cacheKey]: data }));

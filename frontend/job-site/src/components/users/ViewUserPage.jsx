@@ -1,7 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AuthContext, UserContext } from '../../App';
 import calculateAge from '../../utils/CalculateAge';
 import { useLocation } from 'react-router-dom';
+import { GO_API } from '../../utils/api';
 
 function ViewUserPage() {
     const [ targetUser, setTargetUser ] = useState(null)
@@ -13,7 +14,7 @@ useEffect(() => {
 
   const fetchFavorites = async () => {
     try {
-      const res = await fetch(`http://localhost:8888/api/user/view?userID=${destId}`, {
+      const res = await fetch(`${GO_API}/user/view?userID=${destId}`, {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });

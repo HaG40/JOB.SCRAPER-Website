@@ -1,8 +1,9 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { UserContext } from "../../App";
 import { JobCompareContext1 } from "../job_matcher/JobMatcher";
 import { FaPlus, FaMinus, FaSync, FaUpload, FaTimes, FaUser, FaFileAlt, FaSearch } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { GO_API, AI_API } from "../../utils/api";
 
 const CACHE_TTL      = 1000 * 60 * 10;
 const ACCEPTED_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
@@ -132,7 +133,7 @@ function GetRecommendJob(props) {
     for (const keyword of kws) {
       try {
         const res = await fetch(
-          `http://localhost:8888/api/jobs/recommend/search?keyword=${encodeURIComponent(keyword)}`
+          `${GO_API}/jobs/recommend/search?keyword=${encodeURIComponent(keyword)}`
         );
         if (!res.ok) continue;
         const data = await res.json();
@@ -196,7 +197,7 @@ function GetRecommendJob(props) {
     try {
       const formData = new FormData();
       formData.append("resume_file", file);
-      const res = await fetch("http://localhost:5000/recommend/cv", { method: "POST", body: formData });
+      const res = await fetch(`${AI_API}/recommend/cv`, { method: "POST", body: formData });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 

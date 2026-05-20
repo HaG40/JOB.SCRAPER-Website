@@ -8,6 +8,7 @@ import Logout from './components/users/Logout';
 import { ToastContainer } from 'react-toastify';
 import { useEffect, useState, createContext } from 'react';
 import calculateAge from "./utils/CalculateAge";
+import { GO_API } from './utils/api';
 
 import JobMatcher from './components/job_matcher/JobMatcher';
 
@@ -22,7 +23,7 @@ function App() {
   const location = useLocation();
   
   useEffect(() => {
-    fetch("http://localhost:8888/api/user", {
+    fetch(`${GO_API}/user`, {
       headers: { "Content-Type": "application/json" },
       credentials: "include"
     })
@@ -50,7 +51,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:8888/api/protected", { credentials: "include" })
+    fetch(`${GO_API}/protected`, { credentials: "include" })
       .then(async (res) => {
         setIsAuthenticated(res.ok);
       });

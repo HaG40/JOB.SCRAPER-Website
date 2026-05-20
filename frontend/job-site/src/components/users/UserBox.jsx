@@ -3,6 +3,7 @@ import React, { useContext, useState } from 'react';
 import { FaEdit } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import CVViewer from './CVViewer';
+import { GO_API } from '../../utils/api';
 
 
 function UserBox() {
@@ -40,7 +41,7 @@ function UserBox() {
             cv: cvBytes ? Array.from(new Uint8Array(cvBytes)) : null,
         };
 
-        const res = await fetch("http://localhost:8888/api/user/edit", {
+        const res = await fetch(`${GO_API}/user/edit`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             credentials: 'include',

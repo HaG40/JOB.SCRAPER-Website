@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { toast } from 'react-toastify';
-
+import { GO_API } from "../utils/api";
 
 
 function Logout(){
 
     useEffect(() => {
-    fetch("http://localhost:8888/api/logout", { 
+    fetch(`${GO_API}/logout`, { 
         credentials: "include", 
         method: "POST",
         headers : {"Content-Type" : "application/json"}

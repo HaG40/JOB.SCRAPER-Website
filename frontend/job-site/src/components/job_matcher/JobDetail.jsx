@@ -1,5 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { JobCompareContext1 } from "./JobMatcher";
+import { GO_API } from "../../utils/api";
 
 const CACHE_TTL = 1000 * 60 * 10;
 
@@ -40,7 +41,7 @@ function JobDetail() {
         });
 
         const res = await fetch(
-          `http://localhost:8888/api/jobs/detail?${params.toString()}`,
+          `${GO_API}/jobs/detail?${params.toString()}`,
           { method: "GET", headers: { "Content-Type": "application/json" } }
         );
 

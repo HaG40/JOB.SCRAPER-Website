@@ -1,12 +1,13 @@
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { GO_API } from '../../utils/api';
 
 function FavoriteButton(props) {
   const [favorited, setFavorited] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:8888/api/jobs/favorite/check?userId=${props.userId}&url=${encodeURIComponent(props.url)}`, {
+    fetch(`${GO_API}/jobs/favorite/check?userId=${props.userId}&url=${encodeURIComponent(props.url)}`, {
       credentials: 'include',
     })
       .then(res => res.json())
@@ -21,8 +22,8 @@ function FavoriteButton(props) {
   const toggleFavorite = () => {
     const isAdding = !favorited;
     const apiUrl = isAdding
-      ? 'http://localhost:8888/api/jobs/favorite/add'
-      : 'http://localhost:8888/api/jobs/favorite/delete';
+      ? `${GO_API}/jobs/favorite/add`
+      : `${GO_API}/jobs/favorite/delete`;
 
     fetch(apiUrl, {
       method: isAdding ? 'POST' : 'DELETE',

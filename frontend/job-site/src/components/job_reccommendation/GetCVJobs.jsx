@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { UserContext } from "../../App";
 import GetRecommendJob from "./GetRecomendJob";
+import { AI_API } from "../../utils/api";
 
 function SendCVToPython() {
   const { user }              = useContext(UserContext);
@@ -14,7 +15,7 @@ function SendCVToPython() {
       const formData = new FormData();
       formData.append("resume_file", blob, "cv.pdf");
 
-      const res = await fetch("http://localhost:5000/recommend/cv", {
+      const res = await fetch(`${AI_API}/recommend/cv`, {
         method: "POST",
         body: formData,
       });
