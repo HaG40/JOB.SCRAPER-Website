@@ -30,7 +30,7 @@ app = FastAPI(title="AI Resume Analyzer API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://job-scraper-frontend-6a0r1qqh5-hadsapong-lee-s-projects.vercel.app",
+        "https://job-scraper-frontend-fawn.vercel.app/",
     ],
     allow_credentials=True,
     allow_methods=["*"],
