@@ -6,4 +6,4 @@ pillow
 pdf2image
 pytesseract
 pydantic
-multipart
+python-multipart
