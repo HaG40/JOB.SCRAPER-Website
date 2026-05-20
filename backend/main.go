@@ -10,12 +10,17 @@ import (
 )
 
 func main() {
+	if os.Getenv("RENDER") == "" && os.Getenv("FLY_APP_NAME") == "" {
+		_ = godotenv.Load()
+	}
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "10000"
 	}
 
 	router.SetUpRoutes()
-	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+
+	log.Println("Server running on port", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
