@@ -1,7 +1,6 @@
 import { useContext } from "react";
 import { AuthContext, UserContext } from "../../App";
 import GetCVJobs from "./GetCVJobs";
-import React from "react";
 
 function JobReccomendByUserCV() {
   const { user } = useContext(UserContext);
@@ -19,18 +18,39 @@ function JobReccomendByUserCV() {
     );
   }
 
-  
   return (
-    <div className="p-2 w-md">
-      <h1 className="text-lg font-bold mb-4 text-orange-500">งานที่เหมาะกับคุณ (วิเคราะห์จากเรซูเม่)</h1>
+    <div className="w-md flex flex-col border-b border-gray-100 bg-white overflow-hidden">
 
-      
-      {user.cv ? 
-          user && <GetCVJobs/>
-        :
-          <p className="text-gray-500 ml-2">ไม่มีข้อมูล กรุณาอัปโหลดเรซูเม่</p>
-      }
-      
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-gray-100">
+        <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">
+          แนะนำสำหรับคุณ
+        </p>
+        <h1 className="text-base font-semibold text-orange-500 mt-0.5">
+          ✨ งานที่เหมาะกับเรซูเม่ของคุณ
+        </h1>
+      </div>
+
+      {/* Content */}
+      <div className="px-4 py-4 flex-1">
+        {user.cv ? (
+          // มี CV ในระบบ → โหลดผลจาก CV ที่บันทึกไว้ + ยังอัปโหลดใหม่ได้
+          <GetCVJobs />
+        ) : (
+          // ไม่มี CV ในระบบ → แสดงเฉพาะ upload section
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col items-center gap-2 py-6">
+              <span className="text-3xl">📄</span>
+              <p className="text-sm font-medium text-gray-400">ยังไม่มีเรซูเม่ในระบบ</p>
+              <p className="text-xs text-gray-300 text-center">
+                อัปโหลด CV เพื่อรับการแนะนำงานที่เหมาะกับคุณ
+              </p>
+            </div>
+            <GetCVJobs uploadOnly />
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

@@ -1,35 +1,73 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../../App";
 import { JobCompareContext1 } from "../job_matcher/JobMatcher";
-import { FaPlus, FaMinus, FaSync } from "react-icons/fa";
+import { FaPlus, FaMinus, FaSync, FaUpload, FaTimes, FaUser, FaFileAlt, FaSearch } from "react-icons/fa";
 import { toast } from "react-toastify";
 
-const CACHE_TTL = 1000 * 60 * 10;
+const CACHE_TTL      = 1000 * 60 * 10;
+const ACCEPTED_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+const ACCEPTED_EXT   = ".pdf,.jpg,.jpeg,.png";
+const SOURCE         = { ACCOUNT: "account", UPLOAD: "upload" };
+
+const getPdfPageCount = async (file) => {
+  const text = await file.text();
+  const matches = text.match(/\/Type[\s]*\/Page[^s]/g);
+  return matches ? matches.length : 1;
+};
+
+const validateFile = async (file) => {
+  if (!ACCEPTED_TYPES.includes(file.type))
+    return "รองรับเฉพาะไฟล์ PDF, JPG, JPEG, PNG เท่านั้น";
+  if (file.type === "application/pdf") {
+    const pages = await getPdfPageCount(file);
+    if (pages > 1) return `เรซูเม่ต้องมีเพียง 1 หน้าเท่านั้น (ไฟล์นี้มี ${pages} หน้า)`;
+  }
+  return null;
+};
 
 function GetRecommendJob(props) {
-  const { user } = useContext(UserContext);
-  const [results, setResults] = useState([]);
-  const [addedJobs, setAddedJobs] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [jobSelected, setJobSelected, setDetail] = useState(false);
-
+  const { user }                = useContext(UserContext);
   const { jobBox1, setJobBox1 } = useContext(JobCompareContext1);
 
+  // ✅ hasAccountCV = มี keywords แล้ว หรือ มี onAnalyzeAccount ให้เรียกได้
+  const hasAccountCV =
+    (Array.isArray(props.recommend) && props.recommend.length > 0) ||
+    !!props.onAnalyzeAccount;
+
+  const [source, setSource]               = useState(hasAccountCV ? SOURCE.ACCOUNT : SOURCE.UPLOAD);
+  const [results, setResults]             = useState([]);
+  const [addedJobs, setAddedJobs]         = useState([]);
+  const [isLoading, setIsLoading]         = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [jobSelected, setJobSelected]     = useState(false);
+  const [uploadedFile, setUploadedFile]   = useState(null);
+  const [analyzed, setAnalyzed]           = useState(false);
+
+  // ✅ ref สำหรับรอ props.recommend update หลัง onAnalyzeAccount
+  const pendingLoad = useRef(false);
+  const fileInputRef = useRef(null);
+
   const keywords = Array.isArray(props.recommend)
-    ? props.recommend
-        .map((k) => (typeof k === "string" ? k.trim() : ""))
-        .filter((k) => k !== "")
-        .slice(0, 5)
+    ? props.recommend.map((k) => (typeof k === "string" ? k.trim() : "")).filter(Boolean).slice(0, 5)
     : [];
 
   const cacheKey = `recommend_${keywords.join("_")}`;
+  const loading  = isLoading || uploadLoading;
 
+  // ✅ trigger loadData เมื่อ props.recommend update หลัง onAnalyzeAccount
   useEffect(() => {
-    if (user && keywords.length > 0) {
+    if (pendingLoad.current && keywords.length > 0 && source === SOURCE.ACCOUNT) {
+      pendingLoad.current = false;
       loadData();
     }
-  }, [user, props.recommend]);
+  }, [props.recommend]);
 
+  // ✅ canAnalyze: ACCOUNT ให้ผ่านถ้ามี onAnalyzeAccount แม้ keywords ยังว่าง
+  const canAnalyze =
+    (source === SOURCE.ACCOUNT && (keywords.length > 0 || !!props.onAnalyzeAccount)) ||
+    (source === SOURCE.UPLOAD  && uploadedFile !== null);
+
+  // ── Select / Unselect ─────────────────────────────────────────
   const handleSelect = (job) => {
     if (!jobBox1 || Object.keys(jobBox1).length === 0) {
       setJobBox1(job);
@@ -42,220 +80,366 @@ function GetRecommendJob(props) {
   };
 
   const handleUnselect = (job) => {
-    if (
-      jobBox1 &&
-      jobBox1.title === job.title &&
-      jobBox1.company === job.company
-    ) {
-      setJobBox1({});
-    }
-
-    setAddedJobs((prev) =>
-      prev.filter(
-        (j) => !(j.title === job.title && j.company === job.company)
-      )
-    );
-
+    if (jobBox1?.title === job.title && jobBox1?.company === job.company) setJobBox1({});
+    setAddedJobs((prev) => prev.filter((j) => !(j.title === job.title && j.company === job.company)));
     setJobSelected(false);
-    setJobBox1({});
-    setDetail(null);
     toast.info("นำงานออกแล้ว");
   };
 
-  const loadData = async () => {
-    try {
-      const cached = localStorage.getItem(cacheKey);
+  const isAdded = (job) =>
+    addedJobs.some((j) => j.title === job.title && j.company === job.company);
 
-      if (cached) {
-        const parsed = JSON.parse(cached);
+  // ── Switch source ─────────────────────────────────────────────
+  const handleSourceSwitch = (next) => {
+    if (next === source) return;
+    setSource(next);
+    setResults([]);
+    setUploadedFile(null);
+    setAddedJobs([]);
+    setJobSelected(false);
+    setAnalyzed(false);
+    setJobBox1({});
+    pendingLoad.current = false;
+  };
 
-        if (Date.now() - parsed.timestamp < CACHE_TTL) {
-          setResults(parsed.data);
-          return;
-        } else {
-          localStorage.removeItem(cacheKey);
-        }
+  // ── ปุ่มเริ่มวิเคราะห์ ────────────────────────────────────────
+  const handleAnalyze = async () => {
+    if (!canAnalyze) return;
+    setAnalyzed(true);
+
+    if (source === SOURCE.ACCOUNT) {
+      if (keywords.length === 0 && props.onAnalyzeAccount) {
+        // ✅ รอ parent set recommendations → props.recommend → useEffect จะเรียก loadData
+        pendingLoad.current = true;
+        await props.onAnalyzeAccount();
+      } else {
+        await loadData();
       }
+    }
 
-      await fetchData();
-    } catch (err) {
-      await fetchData();
+    if (source === SOURCE.UPLOAD && uploadedFile) {
+      await fetchByUpload(uploadedFile);
     }
   };
 
-  const fetchData = async () => {
-    setIsLoading(true);
-
-    try {
-      if (keywords.length === 0) {
-        setResults([]);
-        return;
-      }
-
-      const collectedResults = [];
-
-      for (const keyword of keywords) {
-        try {
-          const res = await fetch(
-            `http://localhost:8888/api/jobs/recommend/search?keyword=${encodeURIComponent(
-              keyword
-            )}`
-          );
-
-          if (!res.ok) continue;
-
-          const data = await res.json();
-
-          if (Array.isArray(data)) {
-            collectedResults.push(...data);
-          }
-        } catch (err) {
-          console.error(`Failed to fetch recommendations for keyword: ${keyword}`, err);
-        }
-      }
-
-      const unique = collectedResults.filter(
-        (job, index, self) =>
-          index ===
-          self.findIndex(
-            (j) => j.title === job.title && j.company === job.company
-          )
-      );
-
-      setResults(unique);
-
-      localStorage.setItem(
-        cacheKey,
-        JSON.stringify({
-          data: unique,
-          timestamp: Date.now(),
-        })
-      );
-    } catch (err) {
-      setResults([]);
-    } finally {
-      setIsLoading(false);
+  // ── Fetch by keywords (shared) ────────────────────────────────
+  const fetchJobsByKeywords = async (kws) => {
+    const collected = [];
+    for (const keyword of kws) {
+      try {
+        const res = await fetch(
+          `http://localhost:8888/api/jobs/recommend/search?keyword=${encodeURIComponent(keyword)}`
+        );
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (Array.isArray(data)) collected.push(...data);
+      } catch (err) { console.error(`Failed: ${keyword}`, err); }
     }
+    return collected.filter(
+      (job, i, self) => i === self.findIndex((j) => j.title === job.title && j.company === job.company)
+    );
+  };
+
+  // ── Fetch by account keywords (with cache) ────────────────────
+  const loadData = async () => {
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.timestamp < CACHE_TTL) { setResults(parsed.data); return; }
+        localStorage.removeItem(cacheKey);
+      }
+      await fetchByKeywords();
+    } catch { await fetchByKeywords(); }
+  };
+
+  const fetchByKeywords = async () => {
+    setIsLoading(true);
+    setResults([]);
+    try {
+      if (!keywords.length) return;
+      const unique = await fetchJobsByKeywords(keywords);
+      setResults(unique);
+      localStorage.setItem(cacheKey, JSON.stringify({ data: unique, timestamp: Date.now() }));
+    } catch { setResults([]); }
+    finally { setIsLoading(false); }
   };
 
   const handleReload = async () => {
     setJobBox1({});
     setJobSelected(false);
     localStorage.removeItem(cacheKey);
-    setResults([]);
-    setIsLoading(true); 
     toast.info("รีโหลดข้อมูลใหม่...");
-    await fetchData();
+    await fetchByKeywords();
+  };
+
+  // ── Upload new CV ─────────────────────────────────────────────
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const error = await validateFile(file);
+    if (error) { toast.error(error); return; }
+    setUploadedFile(file);
+    setResults([]);
+    setAnalyzed(false);
+  };
+
+  // ✅ fetchByUpload: ส่งไฟล์ → ได้ keywords → ค้นหา job listings จริงๆ
+  const fetchByUpload = async (file) => {
+    setUploadLoading(true);
+    setResults([]);
+    try {
+      const formData = new FormData();
+      formData.append("resume_file", file);
+      const res = await fetch("http://localhost:5000/recommend/cv", { method: "POST", body: formData });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // /recommend/cv คืน keywords (job titles) ไม่ใช่ job objects
+      const uploadKeywords = Array.isArray(data.jobs)
+        ? data.jobs.map((k) => (typeof k === "string" ? k.trim() : "")).filter(Boolean).slice(0, 5)
+        : [];
+
+      if (uploadKeywords.length === 0) {
+        toast.error("ไม่สามารถวิเคราะห์ CV ได้ กรุณาลองใหม่");
+        setResults([]);
+        return;
+      }
+
+      // ✅ นำ keywords ไปค้นหา job listings จริงๆ
+      const unique = await fetchJobsByKeywords(uploadKeywords);
+      setResults(unique);
+      toast.success("วิเคราะห์ CV สำเร็จ");
+    } catch (err) {
+      console.error("Upload error:", err);
+      toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่");
+      setResults([]);
+    } finally { setUploadLoading(false); }
+  };
+
+  const handleClearUpload = () => {
+    setUploadedFile(null);
+    setResults([]);
+    setAnalyzed(false);
+  };
+
+  const handleResetAnalyze = () => {
+    setAnalyzed(false);
+    setResults([]);
+    setJobBox1({});
+    setJobSelected(false);
+    setAddedJobs([]);
   };
 
   return (
-    <>
-      {isLoading && (
-        <div className="flex flex-col items-center py-10 gap-3">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-200 border-t-orange-400" />
-          <p className="text-sm text-gray-400">กำลังค้นหางาน...</p>
+    <div className="flex flex-col gap-3 px-1">
+
+      {/* ── Source Selector ──────────────────────────────────────── */}
+      <div className="flex rounded-xl border border-gray-100 bg-gray-50 p-1 gap-1">
+        <button
+          type="button"
+          disabled={!hasAccountCV}
+          onClick={() => handleSourceSwitch(SOURCE.ACCOUNT)}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg
+                      text-xs font-medium transition-all
+                      ${source === SOURCE.ACCOUNT
+                        ? "bg-white shadow-sm text-orange-500 border border-orange-100"
+                        : "text-gray-400 hover:text-gray-500"
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+        >
+          <FaUser size={10} />
+          เรซูเม่ในบัญชี
+          {hasAccountCV && (
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full
+              ${source === SOURCE.ACCOUNT ? "bg-orange-50 text-orange-400" : "bg-gray-200 text-gray-400"}`}>
+              มีข้อมูล
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleSourceSwitch(SOURCE.UPLOAD)}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg
+                      text-xs font-medium transition-all
+                      ${source === SOURCE.UPLOAD
+                        ? "bg-white shadow-sm text-orange-500 border border-orange-100"
+                        : "text-gray-400 hover:text-gray-500"
+                      }`}
+        >
+          <FaUpload size={10} />
+          อัปโหลด CV ใหม่
+        </button>
+      </div>
+
+      {/* ── Upload Panel ─────────────────────────────────────────── */}
+      {source === SOURCE.UPLOAD && (
+        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-3">
+          {uploadedFile ? (
+            <div className="flex items-center justify-between gap-2
+                            bg-white border border-orange-100 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <FaFileAlt className="text-orange-400 shrink-0" size={12} />
+                <span className="text-xs text-gray-600 truncate">{uploadedFile.name}</span>
+              </div>
+              <button type="button" onClick={handleClearUpload}
+                className="shrink-0 text-gray-300 hover:text-red-400 transition-colors">
+                <FaTimes size={12} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg
+                         border border-orange-200 bg-white text-sm text-orange-400
+                         hover:bg-orange-50 transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FaUpload size={12} />
+              เลือกไฟล์ CV
+            </button>
+          )}
+          <p className="text-[10px] text-gray-300 mt-1.5 text-center">
+            รองรับ PDF, JPG, PNG • 1 หน้าเท่านั้น
+          </p>
+          <input ref={fileInputRef} type="file" accept={ACCEPTED_EXT}
+            className="hidden" onChange={handleFileChange} />
         </div>
       )}
 
-      {!isLoading && results.length === 0 && (
-        <p className="text-gray-500 mt-30 justify-self-center">ไม่พบข้อมูล</p>
+      {/* ── ปุ่มเริ่มวิเคราะห์ ───────────────────────────────────── */}
+      {!analyzed && (
+        <button
+          type="button"
+          onClick={handleAnalyze}
+          disabled={!canAnalyze || loading}
+          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
+                      text-sm font-medium shadow-sm transition-all
+                      ${canAnalyze && !loading
+                        ? "bg-orange-500 hover:bg-orange-600 text-white"
+                        : "bg-gray-100 text-gray-300 cursor-not-allowed"
+                      }`}
+        >
+          <FaSearch size={12} />
+          {source === SOURCE.ACCOUNT ? "วิเคราะห์จากเรซูเม่ในบัญชี" : "วิเคราะห์จาก CV ที่อัปโหลด"}
+        </button>
       )}
 
-      {!isLoading && (
-        <div className="space-y-4 mt-4 mb-4 w-full">
-          {results.map((job, index) => {
-            const isAdded = addedJobs.some(
-              (j) => j.title === job.title && j.company === job.company
-            );
+      {/* ── Loading ─────────────────────────────────────────────── */}
+      {loading && (
+        <div className="flex flex-col items-center py-10 gap-3">
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-200 border-t-orange-400" />
+          <p className="text-sm text-gray-400">
+            {uploadLoading ? "กำลังวิเคราะห์ CV..." : "กำลังค้นหางาน..."}
+          </p>
+        </div>
+      )}
 
-            return (
-              <div
-                key={index}
-                className={`p-5 border border-gray-200 rounded-2xl shadow-sm ${
-                  isAdded ? "bg-orange-400" : "bg-white"
-                }`}
-              >
-                <div className="flex flex-row justify-between items-center gap-5">
-                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                      <h3 className={`text-sm font-bold truncate
-                        ${isAdded ? "text-white" : "text-orange-500"}`}>
+      {/* ── Empty หลังวิเคราะห์แล้วไม่พบผล ──────────────────────── */}
+      {!loading && analyzed && results.length === 0 && (
+        <div className="flex flex-col items-center py-8 gap-2">
+          <span className="text-2xl">🔍</span>
+          <p className="text-sm text-gray-400">ไม่พบข้อมูล</p>
+        </div>
+      )}
+
+      {/* ── Placeholder ก่อนกดวิเคราะห์ ─────────────────────────── */}
+      {!loading && !analyzed && (
+        <div className="flex flex-col items-center py-8 gap-2">
+          <span className="text-2xl">
+            {source === SOURCE.UPLOAD && !uploadedFile ? "📤" : "✨"}
+          </span>
+          <p className="text-sm text-gray-400">
+            {source === SOURCE.UPLOAD && !uploadedFile
+              ? "เลือกไฟล์ CV แล้วกดวิเคราะห์"
+              : "กดวิเคราะห์เพื่อดูงานที่เหมาะกับคุณ"}
+          </p>
+        </div>
+      )}
+
+      {/* ── Job List ────────────────────────────────────────────── */}
+      {!loading && results.length > 0 && (
+        <>
+          <div className="overflow-y-auto max-h-[50vh] space-y-3 pr-1
+                          scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+            {results.map((job, index) => {
+              const added = isAdded(job);
+              return (
+                <div key={index}
+                  className={`p-4 rounded-2xl border shadow-sm transition-colors
+                    ${added ? "bg-orange-400 border-orange-300" : "bg-white border-gray-100"}`}>
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                      <h3 className={`text-sm font-bold truncate ${added ? "text-white" : "text-orange-500"}`}>
                         {job.title}
                       </h3>
-                      <p className={`text-xs ${isAdded ? "text-orange-100" : "text-gray-500"}`}>
+                      <p className={`text-xs ${added ? "text-orange-100" : "text-gray-500"}`}>
                         {job.company}
                       </p>
                       {job.location && (
-                        <p className={`text-xs ${isAdded ? "text-orange-100" : "text-gray-400"}`}>
+                        <p className={`text-xs ${added ? "text-orange-100" : "text-gray-400"}`}>
                           📍 {job.location}
                         </p>
                       )}
                       {job.salary && (
-                        <p className={`text-xs ${isAdded ? "text-orange-100" : "text-gray-400"}`}>
+                        <p className={`text-xs ${added ? "text-orange-100" : "text-gray-400"}`}>
                           💰 {job.salary}
                         </p>
                       )}
                       <div className="flex items-center gap-3 mt-1.5">
-                        <a
-                          href={job.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`text-xs underline
-                            ${isAdded ? "text-white" : "text-blue-400 hover:text-blue-600"}`}
-                        >
+                        <a href={job.url} target="_blank" rel="noopener noreferrer"
+                          className={`text-xs underline ${added ? "text-white" : "text-blue-400 hover:text-blue-600"}`}>
                           ดูงานนี้
                         </a>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full
-                          ${isAdded
-                            ? "bg-orange-300 text-white"
-                            : "bg-amber-50 text-amber-600 border border-amber-100"}`}>
+                          ${added ? "bg-orange-300 text-white" : "bg-amber-50 text-amber-600 border border-amber-100"}`}>
                           {job.source}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      {isAdded ? (
-                        <button
-                          type="button"
-                          onClick={() => handleUnselect(job)}
-                          className="p-2 bg-orange-700 text-white rounded-full shadow
-                                     transition hover:scale-110"
-                        >
+                    <div className="shrink-0">
+                      {added ? (
+                        <button type="button" onClick={() => handleUnselect(job)}
+                          className="p-2 bg-orange-700 text-white rounded-full shadow transition hover:scale-110">
                           <FaMinus size={12} />
                         </button>
                       ) : (
-                        <button
-                          type="button"
+                        <button type="button"
                           onClick={jobSelected ? undefined : () => handleSelect(job)}
                           className={`p-2 rounded-full shadow text-white transition
-                            ${jobSelected
-                              ? "bg-gray-200 cursor-not-allowed"
-                              : "bg-orange-500 hover:scale-110 cursor-pointer"
-                            }`}
-                        >
+                            ${jobSelected ? "bg-gray-200 cursor-not-allowed" : "bg-orange-500 hover:scale-110 cursor-pointer"}`}>
                           <FaPlus size={12} />
                         </button>
                       )}
                     </div>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
 
-      {!isLoading && (
-        <div className="flex justify-start">
-          <button
-            onClick={handleReload}
-            className="flex items-center gap-2 px-4 text-gray-400 hover:text-gray-500 hover:cursor-pointer rounded-lg text-md transition hover:scale-110"
-          >
-            <FaSync />
-            รีโหลด
-          </button>
-        </div>
+          <div className="flex justify-between items-center pt-1 border-t border-gray-100">
+            {source === SOURCE.ACCOUNT && (
+              <button onClick={handleReload}
+                className="flex items-center gap-2 px-3 py-1 text-gray-400
+                           hover:text-gray-500 rounded-lg text-sm transition hover:scale-110">
+                <FaSync size={11} />
+                รีโหลด
+              </button>
+            )}
+            <button onClick={handleResetAnalyze}
+              className="ml-auto flex items-center gap-1.5 px-3 py-1 text-xs
+                         text-gray-400 hover:text-orange-400 transition-colors rounded-lg">
+              ← วิเคราะห์ใหม่
+            </button>
+          </div>
+        </>
       )}
-    </>
+    </div>
   );
 }
 

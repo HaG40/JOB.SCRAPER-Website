@@ -96,7 +96,7 @@ export default function Result() {
 
   const matchResumeWithJob = async () => {
     setResult({});
-    // if(result && Object.keys(result).length > 0 && !firstSearch) return; // ป้องกันเรียกซ้ำ
+    if(result && Object.keys(result).length > 0 && !firstSearch) return; // ป้องกันเรียกซ้ำ
     try {
       setLoading(true);
       const file = base64ToFile(user.cv, "resume.pdf");
