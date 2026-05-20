@@ -269,21 +269,30 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
 
 [RELEVANCE]
 🔍 ประเมิน: ...
+
 ✅ จุดแข็ง: ... (Career Summary ที่ดีถือเป็นจุดแข็ง ข้อมูลติดต่อครบไม่นับ)
+
 ⚠️ สิ่งที่ขาดหรือควรปรับ: ...
 
 [EXPERIENCE]
 🔍 ประเมิน: ...
+
 ❌ ข้อกำหนดที่ไม่ผ่าน: ...
+
 ✅ จุดแข็ง: ... (ถ้า JD รับ Fresh Graduate แต่ผู้สมัครมีประสบการณ์ = ผ่าน แต่แนะนำหางานที่ Require สูงกว่า)
+
 ⚠️ ควรปรับปรุง: ...
+
 ตัวอย่างการเขียนที่ดีกว่า:
 - ...
 
 [SKILLS]
 🎓 วุฒิการศึกษา:
+
 - JD กำหนด: ...
+
 - ผู้สมัครมี: ...
+
 - ผล: ✅ ผ่าน / ✅ ผ่าน (วุฒิสูงกว่า — แนะนำหางานที่ตรงวุฒิมากกว่า) / ❌ ไม่เหมาะสม — เหตุผล
 
 สาขาวิชาที่ตำแหน่งคาดหวัง: ...
@@ -297,7 +306,12 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
 - มี: ...
 - ขาด: ...
 
-สิ่งที่ควรแก้ไขในส่วนทักษะ: ..."""
+สิ่งที่ควรแก้ไขในส่วนทักษะ: ...
+
+[SUMMARY]
+ความเหมาะสม: ✅ เหมาะสม / ❌ ไม่เหมาะสม
+📌 เหตุผล: ...
+(ไม่ต้องสรุปภาพรวม)"""
 
         user_prompt = f"""กรุณาประเมินเรซูเม่ต่อไปนี้ตามเกณฑ์โดยเทียบกับรายละเอียดงานที่ให้ไว้
 
@@ -333,19 +347,21 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=messages,
             temperature=0.2,
-            max_tokens=1200,
+            max_tokens=2000,
         )
 
         result = response.choices[0].message.content
 
         relevance_match = re.search(r"\[RELEVANCE\]\s*(.*?)\s*\[EXPERIENCE\]", result, re.S)
         exp_match       = re.search(r"\[EXPERIENCE\]\s*(.*?)\s*\[SKILLS\]", result, re.S)
-        skills_match    = re.search(r"\[SKILLS\]\s*(.*)", result, re.S)
+        skills_match    = re.search(r"\[SKILLS\]\s*(.*?)\s*\[SUMMARY\]", result, re.S)
+        summary_match   = re.search(r"\[SUMMARY\]\s*(.*)", result, re.S)
 
         return {
             "relevance":  relevance_match.group(1) if relevance_match else "",
             "experience": exp_match.group(1)       if exp_match       else "",
             "skills":     skills_match.group(1) + "\n"    if skills_match    else "",
+            "summary":    summary_match.group(1) if summary_match else "",
         }
 
     except Exception as e:

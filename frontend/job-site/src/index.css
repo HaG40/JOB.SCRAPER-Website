@@ -11,3 +11,13 @@ textarea.post-text {
   outline: none;
   resize: none;
 }
+
+.gl-term {
+  color: orange-500;
+  font-weight: 500;
+  cursor: help;
+}
+.gl-term:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

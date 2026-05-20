@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { AuthContext, UserContext } from "../../App";
 import GetCVJobs from "./GetCVJobs";
+import GetRecommendJob from "./GetRecomendJob";
 
 function JobReccomendByUserCV() {
   const { user } = useContext(UserContext);
@@ -37,17 +38,7 @@ function JobReccomendByUserCV() {
           // มี CV ในระบบ → โหลดผลจาก CV ที่บันทึกไว้ + ยังอัปโหลดใหม่ได้
           <GetCVJobs />
         ) : (
-          // ไม่มี CV ในระบบ → แสดงเฉพาะ upload section
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col items-center gap-2 py-6">
-              <span className="text-3xl">📄</span>
-              <p className="text-sm font-medium text-gray-400">ยังไม่มีเรซูเม่ในระบบ</p>
-              <p className="text-xs text-gray-300 text-center">
-                อัปโหลด CV เพื่อรับการแนะนำงานที่เหมาะกับคุณ
-              </p>
-            </div>
-            <GetCVJobs uploadOnly />
-          </div>
+            <GetRecommendJob uploadOnly />
         )}
       </div>
 

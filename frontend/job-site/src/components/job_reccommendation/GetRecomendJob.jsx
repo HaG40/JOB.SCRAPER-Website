@@ -41,10 +41,10 @@ function GetRecommendJob(props) {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [jobSelected, setJobSelected]     = useState(false);
   const [uploadedFile, setUploadedFile]   = useState(null);
-  const [analyzed, setAnalyzed]           = useState(false);
+  const [analyzing, setAnalyzing]   = useState(false);
+  const [fetchDone, setFetchDone]   = useState(false);
 
   // ✅ ref สำหรับรอ props.recommend update หลัง onAnalyzeAccount
-  const pendingLoad = useRef(false);
   const fileInputRef = useRef(null);
 
   const keywords = Array.isArray(props.recommend)
@@ -53,14 +53,6 @@ function GetRecommendJob(props) {
 
   const cacheKey = `recommend_${keywords.join("_")}`;
   const loading  = isLoading || uploadLoading;
-
-  // ✅ trigger loadData เมื่อ props.recommend update หลัง onAnalyzeAccount
-  useEffect(() => {
-    if (pendingLoad.current && keywords.length > 0 && source === SOURCE.ACCOUNT) {
-      pendingLoad.current = false;
-      loadData();
-    }
-  }, [props.recommend]);
 
   // ✅ canAnalyze: ACCOUNT ให้ผ่านถ้ามี onAnalyzeAccount แม้ keywords ยังว่าง
   const canAnalyze =
@@ -97,28 +89,40 @@ function GetRecommendJob(props) {
     setUploadedFile(null);
     setAddedJobs([]);
     setJobSelected(false);
-    setAnalyzed(false);
+    setAnalyzing(false);  // เปลี่ยนจาก setAnalyzed
+    setFetchDone(false);  // เพิ่ม
     setJobBox1({});
-    pendingLoad.current = false;
   };
 
-  // ── ปุ่มเริ่มวิเคราะห์ ────────────────────────────────────────
   const handleAnalyze = async () => {
     if (!canAnalyze) return;
-    setAnalyzed(true);
+    setAnalyzing(true);
+    setFetchDone(false); // reset ทุกครั้งที่เริ่มใหม่
 
     if (source === SOURCE.ACCOUNT) {
       if (keywords.length === 0 && props.onAnalyzeAccount) {
-        // ✅ รอ parent set recommendations → props.recommend → useEffect จะเรียก loadData
-        pendingLoad.current = true;
-        await props.onAnalyzeAccount();
+        setIsLoading(true);
+        setResults([]);
+        try {
+          const returnedKeywords = await props.onAnalyzeAccount();
+          if (Array.isArray(returnedKeywords) && returnedKeywords.length > 0) {
+            const kws    = returnedKeywords.map((k) => typeof k === "string" ? k.trim() : "").filter(Boolean).slice(0, 5);
+            const unique = await fetchJobsByKeywords(kws);
+            setResults(unique);
+            const key = `recommend_${kws.join("_")}`;
+            localStorage.setItem(key, JSON.stringify({ data: unique, timestamp: Date.now() }));
+          }
+        } catch { setResults([]); }
+        finally { setIsLoading(false); setFetchDone(true); } // ✅ set หลัง fetch จริงๆ
       } else {
         await loadData();
+        setFetchDone(true);
       }
     }
 
     if (source === SOURCE.UPLOAD && uploadedFile) {
       await fetchByUpload(uploadedFile);
+      setFetchDone(true);
     }
   };
 
@@ -182,7 +186,7 @@ function GetRecommendJob(props) {
     if (error) { toast.error(error); return; }
     setUploadedFile(file);
     setResults([]);
-    setAnalyzed(false);
+    setAnalyzing(false);
   };
 
   // ✅ fetchByUpload: ส่งไฟล์ → ได้ keywords → ค้นหา job listings จริงๆ
@@ -221,15 +225,7 @@ function GetRecommendJob(props) {
   const handleClearUpload = () => {
     setUploadedFile(null);
     setResults([]);
-    setAnalyzed(false);
-  };
-
-  const handleResetAnalyze = () => {
-    setAnalyzed(false);
-    setResults([]);
-    setJobBox1({});
-    setJobSelected(false);
-    setAddedJobs([]);
+    setAnalyzing(false);
   };
 
   return (
@@ -237,26 +233,38 @@ function GetRecommendJob(props) {
 
       {/* ── Source Selector ──────────────────────────────────────── */}
       <div className="flex rounded-xl border border-gray-100 bg-gray-50 p-1 gap-1">
+      <div className="relative group flex-1">
         <button
           type="button"
           disabled={!hasAccountCV}
-          onClick={() => handleSourceSwitch(SOURCE.ACCOUNT)}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg
+          onClick={() => hasAccountCV && handleSourceSwitch(SOURCE.ACCOUNT)}
+          className={`w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg
                       text-xs font-medium transition-all
-                      ${source === SOURCE.ACCOUNT
-                        ? "bg-white shadow-sm text-orange-500 border border-orange-100"
-                        : "text-gray-400 hover:text-gray-500"
-                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                      ${
+                        hasAccountCV
+                          ? source === SOURCE.ACCOUNT
+                            ? "bg-white shadow-sm text-orange-500 border border-orange-100"
+                            : "text-gray-400 hover:text-gray-500"
+                          : "bg-gray-100 text-gray-300 cursor-not-allowed"
+                      }`}
         >
           <FaUser size={10} />
-          เรซูเม่ในบัญชี
-          {hasAccountCV && (
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full
-              ${source === SOURCE.ACCOUNT ? "bg-orange-50 text-orange-400" : "bg-gray-200 text-gray-400"}`}>
-              มีข้อมูล
-            </span>
-          )}
+          เรซูเม่ในของผู้ใช้
         </button>
+
+        {!hasAccountCV && (
+          <div
+            className="absolute left-2/3 -translate-x-1/2 -bottom-9
+                      opacity-0 group-hover:opacity-100
+                      transition-opacity duration-200
+                      pointer-events-none
+                      bg-orange-600 text-white text-[11px]
+                      px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg"
+          >
+            ยังไม่มีเรซูเม่ในบัญชี ไปอัปโหลดที่หน้าโปรไฟล์ก่อน
+          </div>
+        )}
+      </div>
 
         <button
           type="button"
@@ -311,7 +319,7 @@ function GetRecommendJob(props) {
       )}
 
       {/* ── ปุ่มเริ่มวิเคราะห์ ───────────────────────────────────── */}
-      {!analyzed && (
+      {!analyzing && (
         <button
           type="button"
           onClick={handleAnalyze}
@@ -338,8 +346,7 @@ function GetRecommendJob(props) {
         </div>
       )}
 
-      {/* ── Empty หลังวิเคราะห์แล้วไม่พบผล ──────────────────────── */}
-      {!loading && analyzed && results.length === 0 && (
+      {!loading && fetchDone && results.length === 0 && (
         <div className="flex flex-col items-center py-8 gap-2">
           <span className="text-2xl">🔍</span>
           <p className="text-sm text-gray-400">ไม่พบข้อมูล</p>
@@ -347,7 +354,7 @@ function GetRecommendJob(props) {
       )}
 
       {/* ── Placeholder ก่อนกดวิเคราะห์ ─────────────────────────── */}
-      {!loading && !analyzed && (
+      {!loading && !analyzing &&  (
         <div className="flex flex-col items-center py-8 gap-2">
           <span className="text-2xl">
             {source === SOURCE.UPLOAD && !uploadedFile ? "📤" : "✨"}
@@ -363,8 +370,7 @@ function GetRecommendJob(props) {
       {/* ── Job List ────────────────────────────────────────────── */}
       {!loading && results.length > 0 && (
         <>
-          <div className="overflow-y-auto max-h-[50vh] space-y-3 pr-1
-                          scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+          <div className="space-y-3 pr-1">
             {results.map((job, index) => {
               const added = isAdded(job);
               return (
@@ -431,11 +437,6 @@ function GetRecommendJob(props) {
                 รีโหลด
               </button>
             )}
-            <button onClick={handleResetAnalyze}
-              className="ml-auto flex items-center gap-1.5 px-3 py-1 text-xs
-                         text-gray-400 hover:text-orange-400 transition-colors rounded-lg">
-              ← วิเคราะห์ใหม่
-            </button>
           </div>
         </>
       )}
