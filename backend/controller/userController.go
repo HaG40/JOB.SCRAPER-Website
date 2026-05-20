@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -117,10 +116,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	os.Getenv("SECRET_KEY")
 
 	type LoginRequest struct {
 		EmailOrUsername string `json:"user"`
