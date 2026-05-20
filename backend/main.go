@@ -27,8 +27,9 @@ func main() {
 		AllowedOrigins: []string{
 			"https://job-scraper-frontend-6a0r1qqh5-hadsapong-lee-s-projects.vercel.app",
 		},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+		AllowedHeaders:   []string{"*"},
 	})
 
 	handler := c.Handler(http.DefaultServeMux)
