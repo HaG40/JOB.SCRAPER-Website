@@ -23,7 +23,15 @@ func main() {
 
 	router.SetUpRoutes()
 
-	handler := cors.AllowAll().Handler(http.DefaultServeMux)
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"https://job-scraper-frontend-6a0r1qqh5-hadsapong-lee-s-projects.vercel.app",
+		},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"*"},
+	})
+
+	handler := c.Handler(http.DefaultServeMux)
 
 	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
