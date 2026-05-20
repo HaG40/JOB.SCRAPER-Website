@@ -112,6 +112,7 @@ function formatAIText(raw = "") {
   let text = raw.trim();
   text = text.replace(/^\*\*\s*/, "");
   text = text.replace(/\s*###\s*\*\*\s*$/, "");
+  text = text.replace(/\s*##\s*$/, "");
   text = text.replace(/###\s*$/, "");
   text = text.replace(/\*\*(.*?)\*\*/g, `<span class="font-bold">$1</span>`);
   text = text.replace(/\*/g, "");
