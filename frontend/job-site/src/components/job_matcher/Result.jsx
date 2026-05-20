@@ -180,6 +180,12 @@ export default function Result() {
   }, [isReady]);
 
   useEffect(() => {
+    console.log("useEffect triggered");
+    console.log("isReady:", isReady);
+    console.log("user?.cv:", !!user?.cv);
+    console.log("hasJob:", hasJob);
+    console.log("detail:", !!detail);
+
     if (!isReady || !user?.cv) return;
     matchResumeWithJob();
   }, [detail, jobBox1]);
