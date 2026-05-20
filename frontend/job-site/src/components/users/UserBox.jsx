@@ -53,7 +53,7 @@ function UserBox() {
             console.log(err);
         } else {
             console.log("completed");
-            window.location.replace("/user");
+            window.location.replace("/");
         }
     };
 
