@@ -25,13 +25,6 @@ func SetUpRoutes() {
 	http.Handle("/api/jobs/cv/delete", middleware.JobsMiddleware(http.HandlerFunc(controller.DeleteCVJobHandler)))
 	http.Handle("/api/jobs/cv", middleware.JobsMiddleware(http.HandlerFunc(controller.GetCVJobsHandler)))
 
-	// Job Post Route
-	http.Handle("/api/jobs/post/find", middleware.JobsMiddleware(http.HandlerFunc(controller.PostFindJob)))
-	http.Handle("/api/jobs/post/recruit", middleware.JobsMiddleware(http.HandlerFunc(controller.PostRecruitJob)))
-	http.Handle("/api/jobs/post/contract", middleware.JobsMiddleware(http.HandlerFunc(controller.PostContractJob)))
-	http.Handle("/api/jobs/get/find", middleware.JobsMiddleware(http.HandlerFunc(controller.GetFindJob)))
-	http.Handle("/api/jobs/get/recruit", middleware.JobsMiddleware(http.HandlerFunc(controller.GetRecruitJob)))
-	http.Handle("/api/jobs/get/contract", middleware.JobsMiddleware(http.HandlerFunc(controller.GetContractJob)))
 	http.Handle("/api/user/view", middleware.JobsMiddleware(http.HandlerFunc(http.HandlerFunc(controller.ViewUser))))
 	http.Handle("/api/user/cv", middleware.JobsMiddleware(http.HandlerFunc(http.HandlerFunc(controller.GetUserCV))))
 
