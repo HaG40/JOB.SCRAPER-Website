@@ -45,6 +45,8 @@ function GetRecommendJob(props) {
   const [fetchDone, setFetchDone]       = useState(false);
 
   const fileInputRef = useRef(null);
+
+  
   const abortRef = useRef(null);
 
   const keywords = Array.isArray(props.recommend)
@@ -58,6 +60,7 @@ function GetRecommendJob(props) {
     (source === SOURCE.ACCOUNT && (keywords.length > 0 || !!props.onAnalyzeAccount)) ||
     (source === SOURCE.UPLOAD  && uploadedFile !== null);
 
+  
   const cancelFetch = () => {
     if (abortRef.current) {
       abortRef.current.abort();
@@ -67,6 +70,7 @@ function GetRecommendJob(props) {
     setUploadLoading(false);
   };
 
+  
   const handleSelect = (job) => {
     if (!jobBox1 || Object.keys(jobBox1).length === 0) {
       setJobBox1(job);
@@ -192,8 +196,7 @@ function GetRecommendJob(props) {
     }
   };
 
-  // 🔄 ฟังก์ชัน handleReload อัพเดตให้รองรับโหมด UPLOAD
-  const handleReload = async () => {
+const handleReload = async () => {
     cancelFetch();
     setJobBox1({});
     setJobSelected(false);
@@ -447,14 +450,14 @@ function GetRecommendJob(props) {
                     <div className="shrink-0">
                       {added ? (
                         <button type="button" onClick={() => handleUnselect(job)}
-                          className="p-2 bg-orange-700 text-white rounded-full shadow-md">
+                          className="p-2 bg-orange-700 text-white rounded-full shadow transition hover:scale-110">
                           <FaMinus size={12} />
                         </button>
                       ) : (
                         <button type="button"
                           onClick={jobSelected ? undefined : () => handleSelect(job)}
-                          className={`p-2 rounded-full shadow-md text-white
-                            ${jobSelected ? "bg-gray-200" : "bg-orange-500"}`}>
+                          className={`p-2 rounded-full shadow text-white transition
+                            ${jobSelected ? "bg-gray-200 cursor-not-allowed" : "bg-orange-500 hover:scale-110 cursor-pointer"}`}>
                           <FaPlus size={12} />
                         </button>
                       )}
@@ -465,11 +468,11 @@ function GetRecommendJob(props) {
             })}
           </div>
 
-          {/* ── ส่วนปุ่มรีโหลดท้ายตาราง (คลาสเดิมตามโค้ดของพี่) ── */}
           <div className="flex justify-between items-center pt-1 border-t border-gray-100">
             {(source === SOURCE.ACCOUNT || (source === SOURCE.UPLOAD && uploadedFile)) && (
               <button onClick={handleReload}
-                className="flex items-center gap-2 px-3 py-1 text-gray-400 hover:text-gray-500 rounded-lg text-sm">
+                className="flex items-center gap-2 px-3 py-1 text-gray-400
+                           hover:text-gray-500 rounded-lg text-sm transition hover:scale-110">
                 <FaSync size={11} />
                 รีโหลด
               </button>
