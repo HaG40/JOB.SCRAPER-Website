@@ -192,7 +192,7 @@ function GetRecommendJob(props) {
     }
   };
 
-  // 🔄 แก้ไขฟังก์ชัน handleReload ให้รอบรับทั้งสองฝั่งแบบสมบูรณ์
+  // 🔄 ฟังก์ชัน handleReload อัพเดตให้รองรับโหมด UPLOAD
   const handleReload = async () => {
     cancelFetch();
     setJobBox1({});
@@ -447,14 +447,14 @@ function GetRecommendJob(props) {
                     <div className="shrink-0">
                       {added ? (
                         <button type="button" onClick={() => handleUnselect(job)}
-                          className="p-2 bg-orange-700 text-white rounded-full shadow transition hover:scale-110">
+                          className="p-2 bg-orange-700 text-white rounded-full shadow-md">
                           <FaMinus size={12} />
                         </button>
                       ) : (
                         <button type="button"
                           onClick={jobSelected ? undefined : () => handleSelect(job)}
-                          className={`p-2 rounded-full shadow text-white transition
-                            ${jobSelected ? "bg-gray-200 cursor-not-allowed" : "bg-orange-500 hover:scale-110 cursor-pointer"}`}>
+                          className={`p-2 rounded-full shadow-md text-white
+                            ${jobSelected ? "bg-gray-200" : "bg-orange-500"}`}>
                           <FaPlus size={12} />
                         </button>
                       )}
@@ -465,12 +465,11 @@ function GetRecommendJob(props) {
             })}
           </div>
 
-          {/* 🔄 ปรับเงื่อนไขการแสดงผลปุ่มด้านล่างให้แสดงทั้งสองโหมด */}
+          {/* ── ส่วนปุ่มรีโหลดท้ายตาราง (คลาสเดิมตามโค้ดของพี่) ── */}
           <div className="flex justify-between items-center pt-1 border-t border-gray-100">
             {(source === SOURCE.ACCOUNT || (source === SOURCE.UPLOAD && uploadedFile)) && (
               <button onClick={handleReload}
-                className="flex items-center gap-2 px-3 py-1 text-gray-400
-                           hover:text-gray-500 rounded-lg text-sm transition hover:scale-110">
+                className="flex items-center gap-2 px-3 py-1 text-gray-400 hover:text-gray-500 rounded-lg text-sm">
                 <FaSync size={11} />
                 รีโหลด
               </button>
