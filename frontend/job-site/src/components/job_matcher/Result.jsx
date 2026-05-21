@@ -156,6 +156,8 @@ export default function Result() {
   const [result, setResult]   = useState(initialState);
   const [loading, setLoading] = useState(false);
 
+  const [firstLoad, setFirstLoad] = useState(true); // ✅ state เพื่อติดตามการโหลดครั้งแรก
+
   const hasJob  = jobBox1 && Object.keys(jobBox1).length > 0;
   const isReady = hasJob && !!detail;
 
@@ -175,10 +177,11 @@ export default function Result() {
   }, [detail, jobBox1, uploadedCV]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
 
   const matchResumeWithJob = async () => {
+    
     try {
       setLoading(true);
       setResult({});
-
+      if (result && Object.keys(result).length > 0 && !firstLoad) return; // ✅ ถ้ามีผลลัพธ์แล้ว ไม่ต้องเรียก API ซ้ำ
       let file;
       if (uploadedCV) {
         // ✅ ใช้ไฟล์ที่ upload ใหม่ก่อน
@@ -209,6 +212,7 @@ export default function Result() {
       console.error("Match error:", err);
     } finally {
       setLoading(false);
+      setFirstLoad(false); // ✅ หลังจากโหลดครั้งแรกแล้ว ให้ตั้งเป็น false
     }
   };
 
