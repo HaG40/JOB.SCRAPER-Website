@@ -106,7 +106,7 @@ function App() {
         {isAuthenticated && user ? (
           <Link
             to="/user/logout"
-            className="flex items-center gap-2 opacity-80 hover:opacity-100 hover:underline text-sm pl-4 border-l-4 border-white/30"
+            className="flex items-center gap-2 opacity-80 hover:opacity-100 hover:underline text-sm pl-4 border-l-4 border-white/60 h-full"
           >
             <FaSignOutAlt  />
             ออกจากระบบ
