@@ -164,32 +164,24 @@ export default function Result() {
   // ✅ มี CV ถ้ามี uploadedCV หรือ user.cv อย่างใดอย่างหนึ่ง
   const hasCV = !!uploadedCV || !!user?.cv;
 
-  const lastFetchKey = useRef(null);
-
   useEffect(() => {
     if (!isReady) {
       setResult(initialState);
       setLoading(false);
-      lastFetchKey.current = null;
     }
   }, [isReady]);
 
   useEffect(() => {
     if (!isReady || !hasCV) return;
-
-    const fetchKey = `${jobBox1?.title}_${jobBox1?.url}_${detail?.slice(0, 50)}_${uploadedCV?.name ?? "account"}`;
-
-    if (lastFetchKey.current === fetchKey) return;
-    lastFetchKey.current = fetchKey;
-
     matchResumeWithJob();
-  }, [detail, jobBox1, uploadedCV]);
+  }, [detail, jobBox1, uploadedCV]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
 
   const matchResumeWithJob = async () => {
-    
+          setResult({});
+          if (result.relevance && result.relevance !== "" && !uploadedCV && !firstLoad) return; // ✅ ถ้ามีผลลัพธ์แล้ว ไม่ต้องเรียก API ซ้ำ
     try {
       setLoading(true);
-      setResult({});
+
       let file;
       if (uploadedCV) {
         // ✅ ใช้ไฟล์ที่ upload ใหม่ก่อน
