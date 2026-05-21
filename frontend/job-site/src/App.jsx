@@ -70,29 +70,41 @@ function App() {
 
   return (
     <>
-      <div id='header' className='bg-orange-400 z-100 text-white sticky top-0 w-screen h-15 flex justify-between shadow items-center'>
-        <h1 className='flex pl-5 items-center font-bold text-4xl'>JOBJAB TH</h1>
-        <div className="flex flex-row gap-4 items-center text-lg pr-10">
+      <div id='header' className='bg-orange-400 z-50 text-white sticky top-0 w-full h-16 flex justify-between items-center shadow'>
+        {/* Logo */}
+        <h1 className='pl-6 font-extrabold text-3xl tracking-tight'>JOB.SCRAPER TH</h1>
+        
+        {/* Navigation */}
+        <div className="flex flex-row gap-5 items-center text-base pr-8 h-full">
           <Link 
             to="/"
-            className={`${location.pathname === "/" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}>
+            className={`h-full flex items-center px-2 hover:text-orange-50
+              ${location.pathname === "/" ? "border-b-2 border-white font-bold" : "opacity-90"}`}>
             Match
           </Link>
+          
           {isAuthenticated && user ? (
             <Link
               to="/user"
-              className={`${location.pathname === "/user" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
+              className={`h-full flex items-center px-2 hover:text-orange-50
+                ${location.pathname === "/user" ? "border-b-2 border-white font-bold" : "opacity-90"}`}
             >
               {user.username}
             </Link>
           ) : null}
 
           {isAuthenticated && user ? (
-            <Link to="/user/logout">ออกจากระบบ</Link>
+            <Link 
+              to="/user/logout" 
+              className="opacity-80 hover:opacity-100 hover:underline text-sm pl-2 border-l border-white/30"
+            >
+              ออกจากระบบ
+            </Link>
           ) : (
             <Link 
               to="/user/login"
-              className={`${location.pathname === "/user/login" ? "border-b-white border-b-3 py-3.5 px-1 font-semibold" : ""}`}
+              className={`h-full flex items-center px-2 hover:text-orange-50
+                ${location.pathname === "/user/login" ? "border-b-2 border-white font-bold" : "opacity-90"}`}
             >
               เข้าสู่ระบบ
             </Link>

@@ -349,7 +349,7 @@ const handleReload = async () => {
               เลือกไฟล์เรซูเม่
             </button>
           )}
-          <p className="text-[10px] text-gray-500 mt-1.5 text-center">
+          <p className="text-[12px] text-gray-500 mt-1.5 text-center">
             รองรับ PDF, JPG, PNG • 1 หน้าเท่านั้น
           </p>
           <input ref={fileInputRef} type="file" accept={ACCEPTED_EXT}
@@ -364,7 +364,7 @@ const handleReload = async () => {
           onClick={handleAnalyze}
           disabled={!canAnalyze || loading}
           className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
-                      text-sm font-medium shadow-sm transition-all
+                      text-sm font-medium shadow-sm transition-all cursor-pointer
                       ${canAnalyze && !loading
                         ? "bg-orange-500 hover:bg-orange-600 text-white"
                         : "bg-gray-100 text-gray-300 cursor-not-allowed"
@@ -450,7 +450,7 @@ const handleReload = async () => {
                     <div className="shrink-0">
                       {added ? (
                         <button type="button" onClick={() => handleUnselect(job)}
-                          className="p-2 bg-orange-700 text-white rounded-full shadow transition hover:scale-110">
+                          className="p-2 bg-orange-700 text-white rounded-full shadow transition hover:scale-110 cursor-pointer">
                           <FaMinus size={12} />
                         </button>
                       ) : (
@@ -471,7 +471,7 @@ const handleReload = async () => {
           <div className="flex justify-between items-center pt-1 border-t border-gray-100">
             {(source === SOURCE.ACCOUNT || (source === SOURCE.UPLOAD && uploadedFile)) && (
               <button onClick={handleReload}
-                className="flex items-center gap-2 px-3 py-1 text-gray-400
+                className="flex items-center gap-2 px-3 py-1 text-gray-400 cursor-pointer 
                            hover:text-gray-500 rounded-lg text-sm transition hover:scale-110">
                 <FaSync size={11} />
                 รีโหลด

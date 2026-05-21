@@ -287,7 +287,7 @@ function JobSearch() {
             <button
               onClick={() => fetchResults(page - 1)}
               disabled={page <= 1 || isLoading}
-              className="px-4 py-2 rounded-xl bg-orange-400 text-white text-sm
+              className="px-4 py-2 rounded-xl bg-orange-400 text-white text-sm cursor-pointer
                          hover:bg-orange-500 disabled:opacity-30 shadow transition-colors"
             >
               ← ก่อนหน้า
@@ -296,7 +296,7 @@ function JobSearch() {
             <button
               onClick={() => fetchResults(page + 1)}
               disabled={isLoading}
-              className="px-4 py-2 rounded-xl bg-orange-400 text-white text-sm
+              className="px-4 py-2 rounded-xl bg-orange-400 text-white text-sm cursor-pointer
                          hover:bg-orange-500 disabled:opacity-30 shadow transition-colors"
             >
               ถัดไป →
