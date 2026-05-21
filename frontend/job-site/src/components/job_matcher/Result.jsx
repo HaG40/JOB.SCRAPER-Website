@@ -150,6 +150,8 @@ function DetailField({ label, value, loading }) {
 
 // ── Result ────────────────────────────────────────────────────────
 export default function Result() {
+  const isFetching = useRef(false); // 💡 ตัวนี้จะเป็นโล่กำบัง ไม่ให้มีการ fetch ซ้อนเด็ดขาด
+  const lastFetchedKey = useRef("");
   const { jobBox1, detail, uploadedCV } = useContext(JobCompareContext1);
   const { user }                        = useContext(UserContext);
 
@@ -165,36 +167,39 @@ export default function Result() {
   const hasCV = !!uploadedCV || !!user?.cv;
 
   useEffect(() => {
-    // 1. เช็คเงื่อนไขความพร้อม: ถ้ายังไม่พร้อม หรือ ไม่มี CV ให้ล้างสถานะกลับเป็นค่าเริ่มต้นทันที
     if (!isReady || !hasCV) {
       setResult(initialState);
       setLoading(false);
-      return; 
+      lastFetchedKey.current = ""; // ล้างค่าความจำเมื่อเคลียร์ฟอร์ม
+      return;
     }
 
-    // 2. เคลียร์ข้อมูลเก่าในผลลัพธ์ออกก่อน เพื่อให้เข้าเงื่อนไข "result ต้องไม่มีข้อมูลอยู่"
-    setResult(initialState);
-
-    // 3. เริ่มทำการดึงข้อมูลใหม่จาก API
     matchResumeWithJob();
-
-    // ใส่ Dependencies ให้ครบถ้วนตามที่เราเรียกใช้จริง
   }, [isReady, hasCV, detail, jobBox1, uploadedCV, user?.cv]);
 
   const matchResumeWithJob = async () => {
-    setResult({}); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
+    // สร้าง Key จำลองขึ้นมาเพื่อดูว่า งาน + CV ชุดนี้เคยยิงไปหรือยัง
+    const currentKey = `${jobBox1?.title}-${detail}-${uploadedCV?.name || user?.cv?.substring(0,20)}`;
+    
+    // 🛑 ดักจับขั้นเด็ดขาด: ถ้ากำลัง Fetch อยู่ หรือเป็นข้อมูลชุดเดิมเป๊ะๆ -> ให้หยุดทำงานทันที!
+    if (isFetching.current || lastFetchedKey.current === currentKey) {
+      return;
+    }
+
     try {
       setLoading(true);
+      isFetching.current = true; // 🔒 ล็อกประตูทันที ห้ามใครเข้ามา fetch ซ้อน
+      lastFetchedKey.current = currentKey; // จำคีย์ปัจจุบันไว้
+      setResult(initialState); // เคลียร์ผลลัพธ์เก่าตามเงื่อนไขที่คุณต้องการ
 
       let file;
       if (uploadedCV) {
-        // ✅ ใช้ไฟล์ที่ upload ใหม่ก่อน
         file = uploadedCV;
       } else if (user?.cv) {
-        // ✅ fallback ใช้ CV ในบัญชี
         const bytes = Uint8Array.from(atob(user.cv), (c) => c.charCodeAt(0));
         file = new File([bytes], "resume.pdf", { type: "application/pdf" });
       } else {
+        isFetching.current = false;
         return;
       }
 
@@ -214,8 +219,10 @@ export default function Result() {
       });
     } catch (err) {
       console.error("Match error:", err);
+      lastFetchedKey.current = ""; // ถ้าพัง ให้เคลียร์คีย์ทิ้ง เพื่อให้กดลองใหม่ได้
     } finally {
       setLoading(false);
+      isFetching.current = false; // 🔓 ปลดล็อกประตูเมื่อทำงานเสร็จสิ้น
     }
   };
 
