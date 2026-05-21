@@ -174,11 +174,11 @@ export default function Result() {
   useEffect(() => {
     if (!isReady || !hasCV) return;
     matchResumeWithJob();
-  }, [detail]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
+  }, [detail, jobBox1]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
 
   const matchResumeWithJob = async () => {
-    if (result && Object.keys(result).length > 0) return; 
-    setResult({}); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
+    // if (result && Object.keys(result).length > 0) return; 
+    // setResult({}); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
     try {
       setLoading(true);
 
@@ -213,6 +213,7 @@ export default function Result() {
     } finally {
       setLoading(false);
       setFirstLoad(false); // ✅ หลังจากโหลดครั้งแรกแล้ว ให้ตั้งเป็น false
+      isReady(false);
     }
   };
 
