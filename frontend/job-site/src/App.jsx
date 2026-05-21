@@ -9,6 +9,7 @@ import { ToastContainer } from 'react-toastify';
 import { useEffect, useState, createContext } from 'react';
 import calculateAge from "./utils/CalculateAge";
 import { GO_API } from './utils/api';
+import { FaCodeBranch, FaUser, FaRightFromBracket, FaRightToBracket } from 'react-icons/fa';
 
 import JobMatcher from './components/job_matcher/JobMatcher';
 
@@ -70,47 +71,59 @@ function App() {
 
   return (
     <>
-      <div id='header' className='bg-orange-400 z-50 text-white sticky top-0 w-full h-16 flex justify-between items-center shadow'>
-        {/* Logo */}
-        <h1 className='pl-6 font-extrabold text-3xl tracking-tight'>JOB.SCRAPER TH</h1>
-        
-        {/* Navigation */}
-        <div className="flex flex-row gap-5 items-center text-base pr-8 h-full">
-          <Link 
-            to="/"
-            className={`h-full flex items-center px-2 hover:text-orange-50
-              ${location.pathname === "/" ? "border-b-2 border-white font-bold" : "opacity-90"}`}>
-            Match
-          </Link>
-          
-          {isAuthenticated && user ? (
-            <Link
-              to="/user"
-              className={`h-full flex items-center px-2 hover:text-orange-50
-                ${location.pathname === "/user" ? "border-b-2 border-white font-bold" : "opacity-90"}`}
-            >
-              {user.username}
-            </Link>
-          ) : null}
+    <div id='header' className='bg-orange-400 z-50 text-white sticky top-0 w-full h-16 flex justify-between items-center shadow'>
+      {/* Logo */}
+      <h1 className='pl-6 font-extrabold text-3xl tracking-tight'>
+        JOB.SCRAPER TH
+      </h1>
 
-          {isAuthenticated && user ? (
-            <Link 
-              to="/user/logout" 
-              className="opacity-80 hover:opacity-100 hover:underline text-sm pl-2 border-l border-white/30"
-            >
-              ออกจากระบบ
-            </Link>
-          ) : (
-            <Link 
-              to="/user/login"
-              className={`h-full flex items-center px-2 hover:text-orange-50
-                ${location.pathname === "/user/login" ? "border-b-2 border-white font-bold" : "opacity-90"}`}
-            >
-              เข้าสู่ระบบ
-            </Link>
-          )}
-        </div>
+      {/* Navigation */}
+      <div className="flex flex-row gap-6 items-center text-base pr-8 h-full">
+
+        {/* Match */}
+        <Link
+          to="/"
+          className={`h-full flex items-center gap-2 px-2 hover:text-orange-50
+            ${location.pathname === "/" ? "border-b-2 border-white font-bold" : "opacity-90"}`}
+        >
+          <FaCodeBranch />
+          Match
+        </Link>
+
+        {/* User */}
+        {isAuthenticated && user && (
+          <Link
+            to="/user"
+            className={`h-full flex items-center gap-2 px-2 hover:text-orange-50
+              ${location.pathname === "/user" ? "border-b-2 border-white font-bold" : "opacity-90"}`}
+          >
+            <FaUser />
+            {user.username}
+          </Link>
+        )}
+
+        {/* Auth */}
+        {isAuthenticated && user ? (
+          <Link
+            to="/user/logout"
+            className="flex items-center gap-2 opacity-80 hover:opacity-100 hover:underline text-sm pl-2 border-l border-white/30"
+          >
+            <FaRightFromBracket />
+            ออกจากระบบ
+          </Link>
+        ) : (
+          <Link
+            to="/user/login"
+            className={`h-full flex items-center gap-2 px-2 hover:text-orange-50
+              ${location.pathname === "/user/login" ? "border-b-2 border-white font-bold" : "opacity-90"}`}
+          >
+            <FaRightToBracket />
+            เข้าสู่ระบบ
+          </Link>
+        )}
+
       </div>
+    </div>
 
       <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
         <UserContext.Provider value={{ user, setUser }}>
