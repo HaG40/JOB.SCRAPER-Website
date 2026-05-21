@@ -171,13 +171,19 @@ export default function Result() {
     }
   }, [isReady]);
 
-  useEffect(() => {
-    if (!isReady || !hasCV) return;
-    matchResumeWithJob();
-  }, [detail, jobBox1, uploadedCV]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
+  if (result && Object.keys(result).length > 0) {
+    return 
+  } else if (isReady && hasCV) {
+    useEffect(() => {
+      if (!isReady || !hasCV) return;
+      matchResumeWithJob();
+    }, [detail, jobBox1]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
+  }
+
 
   const matchResumeWithJob = async () => {
-          if (result.relevance && result.relevance !== "" && !uploadedCV && !firstLoad) return; // ✅ ถ้ามีผลลัพธ์แล้ว ไม่ต้องเรียก API ซ้ำ
+    // if (result && Object.keys(result).length > 0) return; 
+    setResult(initialState); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
     try {
       setLoading(true);
 
@@ -212,12 +218,6 @@ export default function Result() {
     } finally {
       setLoading(false);
       setFirstLoad(false); // ✅ หลังจากโหลดครั้งแรกแล้ว ให้ตั้งเป็น false
-      setResult((prev) => ({
-        relevance:  prev.relevance  || "",
-        experience: prev.experience || "",
-        skills:     prev.skills     || "",
-        summary:    prev.summary    || "",
-      }));
     }
   };
 
