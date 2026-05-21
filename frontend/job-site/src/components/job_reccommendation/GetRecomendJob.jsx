@@ -45,8 +45,6 @@ function GetRecommendJob(props) {
   const [fetchDone, setFetchDone]       = useState(false);
 
   const fileInputRef = useRef(null);
-
-  
   const abortRef = useRef(null);
 
   const keywords = Array.isArray(props.recommend)
@@ -60,7 +58,6 @@ function GetRecommendJob(props) {
     (source === SOURCE.ACCOUNT && (keywords.length > 0 || !!props.onAnalyzeAccount)) ||
     (source === SOURCE.UPLOAD  && uploadedFile !== null);
 
-  
   const cancelFetch = () => {
     if (abortRef.current) {
       abortRef.current.abort();
@@ -70,7 +67,6 @@ function GetRecommendJob(props) {
     setUploadLoading(false);
   };
 
-  
   const handleSelect = (job) => {
     if (!jobBox1 || Object.keys(jobBox1).length === 0) {
       setJobBox1(job);
@@ -196,14 +192,25 @@ function GetRecommendJob(props) {
     }
   };
 
+  // 🔄 แก้ไขฟังก์ชัน handleReload ให้รอบรับทั้งสองฝั่งแบบสมบูรณ์
   const handleReload = async () => {
     cancelFetch();
     setJobBox1({});
     setJobSelected(false);
-    localStorage.removeItem(cacheKey);
+    setFetchDone(false);
     toast.info("รีโหลดข้อมูลใหม่...");
+    
     abortRef.current = new AbortController();
-    await fetchByKeywords(abortRef.current.signal);
+    const { signal } = abortRef.current;
+
+    if (source === SOURCE.ACCOUNT) {
+      localStorage.removeItem(cacheKey);
+      await fetchByKeywords(signal);
+      if (!signal.aborted) setFetchDone(true);
+    } else if (source === SOURCE.UPLOAD && uploadedFile) {
+      await fetchByUpload(uploadedFile, signal);
+      if (!signal.aborted) setFetchDone(true);
+    }
   };
   
   const handleFileChange = async (e) => {
@@ -306,7 +313,7 @@ function GetRecommendJob(props) {
                       }`}
         >
           <FaUpload size={10} />
-          อัปโหลด CV ใหม่
+          อัปโหลดเรซูเม่ใหม่
         </button>
       </div>
 
@@ -336,10 +343,10 @@ function GetRecommendJob(props) {
                          disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FaUpload size={12} />
-              เลือกไฟล์ CV
+              เลือกไฟล์เรซูเม่
             </button>
           )}
-          <p className="text-[10px] text-gray-300 mt-1.5 text-center">
+          <p className="text-[10px] text-gray-500 mt-1.5 text-center">
             รองรับ PDF, JPG, PNG • 1 หน้าเท่านั้น
           </p>
           <input ref={fileInputRef} type="file" accept={ACCEPTED_EXT}
@@ -391,7 +398,7 @@ function GetRecommendJob(props) {
           </span>
           <p className="text-sm text-gray-400">
             {source === SOURCE.UPLOAD && !uploadedFile
-              ? "เลือกไฟล์ CV แล้วกดวิเคราะห์"
+              ? "เลือกไฟล์เรซูเม่แล้วกดวิเคราะห์"
               : "กดวิเคราะห์เพื่อดูงานที่เหมาะกับคุณ"}
           </p>
         </div>
@@ -458,8 +465,9 @@ function GetRecommendJob(props) {
             })}
           </div>
 
+          {/* 🔄 ปรับเงื่อนไขการแสดงผลปุ่มด้านล่างให้แสดงทั้งสองโหมด */}
           <div className="flex justify-between items-center pt-1 border-t border-gray-100">
-            {source === SOURCE.ACCOUNT && (
+            {(source === SOURCE.ACCOUNT || (source === SOURCE.UPLOAD && uploadedFile)) && (
               <button onClick={handleReload}
                 className="flex items-center gap-2 px-3 py-1 text-gray-400
                            hover:text-gray-500 rounded-lg text-sm transition hover:scale-110">
