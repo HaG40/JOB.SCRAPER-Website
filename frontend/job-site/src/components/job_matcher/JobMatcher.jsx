@@ -15,17 +15,17 @@ function JobMatcher() {
   const [jobBox1, setJobBox1] = useState({});
   const [detail, setDetail]   = useState("");
   const [activeTab, setActiveTab] = useState("recommend");
+  const [uploadedCV, setUploadedCV] = useState(null); // ✅ เพิ่ม
 
   const changeTab = (tabKey) => {
     setJobBox1({});
     setDetail("");  
     setActiveTab(tabKey);
-    setJobBox1({});
-    setDetail("");
+    setUploadedCV(null);
   }
 
   return (
-    <JobCompareContext1.Provider value={{ jobBox1, setJobBox1, detail, setDetail }}>
+    <JobCompareContext1.Provider value={{ jobBox1, setJobBox1, detail, setDetail, uploadedCV, setUploadedCV }}>
       <div className="mx-auto flex flex-row justify-center items-start gap-5 mt-10 mb-10 px-4">
         <div className="shrink-0 flex flex-col rounded-2xl border border-gray-100 shadow-sm bg-white overflow-hidden">
           <div className="flex border-b border-gray-100">

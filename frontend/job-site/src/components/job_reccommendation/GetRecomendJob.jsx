@@ -28,7 +28,7 @@ const validateFile = async (file) => {
 
 function GetRecommendJob(props) {
   const { user }                = useContext(UserContext);
-  const { jobBox1, setJobBox1 } = useContext(JobCompareContext1);
+  const { jobBox1, setJobBox1, setUploadedCV } = useContext(JobCompareContext1);
 
   // ✅ hasAccountCV = มี keywords แล้ว หรือ มี onAnalyzeAccount ให้เรียกได้
   const hasAccountCV =
@@ -83,17 +83,18 @@ function GetRecommendJob(props) {
     addedJobs.some((j) => j.title === job.title && j.company === job.company);
 
   // ── Switch source ─────────────────────────────────────────────
-  const handleSourceSwitch = (next) => {
-    if (next === source) return;
-    setSource(next);
-    setResults([]);
-    setUploadedFile(null);
-    setAddedJobs([]);
-    setJobSelected(false);
-    setAnalyzing(false);  // เปลี่ยนจาก setAnalyzed
-    setFetchDone(false);  // เพิ่ม
-    setJobBox1({});
-  };
+const handleSourceSwitch = (next) => {
+  if (next === source) return;
+  setSource(next);
+  setResults([]);
+  setUploadedFile(null);
+  setUploadedCV(null);  
+  setAddedJobs([]);
+  setJobSelected(false);
+  setAnalyzing(false);
+  setFetchDone(false);
+  setJobBox1({});
+};
 
   const handleAnalyze = async () => {
     if (!canAnalyze) return;
@@ -186,6 +187,7 @@ function GetRecommendJob(props) {
     const error = await validateFile(file);
     if (error) { toast.error(error); return; }
     setUploadedFile(file);
+    setUploadedCV(file);   // ✅ บอก context ว่ามี CV ใหม่
     setResults([]);
     setAnalyzing(false);
   };
@@ -225,6 +227,7 @@ function GetRecommendJob(props) {
 
   const handleClearUpload = () => {
     setUploadedFile(null);
+    setUploadedCV(null);  
     setResults([]);
     setAnalyzing(false);
   };

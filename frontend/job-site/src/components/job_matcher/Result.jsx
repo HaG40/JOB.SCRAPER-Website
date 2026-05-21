@@ -19,7 +19,6 @@ const DETAIL_FIELDS = [
   { key: "summary",    label: "📋 ผลสรุป" },
 ];
 
-// ── Glossary (เรียงยาว→สั้น เพื่อ match ก่อน) ─────────────────────
 const GLOSSARY = {
   "Career Summary/Objective": "สรุปย่อประวัติและเป้าหมายอาชีพ 2-3 บรรทัด ตอบคำถาม 'ทำไมบริษัทถึงควรจ้างคุณ?' วางไว้ต้นเรซูเม่",
   "Reverse Chronological":    "เรียงประสบการณ์จากล่าสุดไปเก่าสุด รูปแบบที่ HR นิยมและ ATS อ่านได้ดีที่สุด",
@@ -30,6 +29,7 @@ const GLOSSARY = {
   "ATS":                      "Applicant Tracking System — ระบบที่บริษัทใช้คัดกรองเรซูเม่อัตโนมัติก่อนถึงมือ HR",
 };
 
+// ── GlossaryTooltip ───────────────────────────────────────────────
 function GlossaryTooltip({ term, definition }) {
   const [visible, setVisible] = useState(false);
   const [pos, setPos]         = useState({ x: 0, y: 0 });
@@ -48,8 +48,7 @@ function GlossaryTooltip({ term, definition }) {
         ref={ref}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setVisible(false)}
-        className="text-blue-500 font-medium cursor-help
-                   hover:underline underline-offset-2"
+        className="text-blue-500 font-medium cursor-help hover:underline underline-offset-2"
       >
         {term}
       </span>
@@ -57,11 +56,11 @@ function GlossaryTooltip({ term, definition }) {
       {visible && (
         <div
           style={{
-            position:  "fixed",
-            left:      pos.x,
-            top:       pos.y,
-            transform: "translate(-50%, -100%)",
-            zIndex:    9999,
+            position:      "fixed",
+            left:          pos.x,
+            top:           pos.y,
+            transform:     "translate(-50%, -100%)",
+            zIndex:        9999,
             pointerEvents: "none",
           }}
           className="bg-orange-600 text-white text-[11px] font-normal
@@ -75,7 +74,7 @@ function GlossaryTooltip({ term, definition }) {
   );
 }
 
-// ── parseWithGlossary: แยก text → React elements ─────────────────
+// ── parseWithGlossary ─────────────────────────────────────────────
 function parseWithGlossary(html) {
   const terms    = Object.keys(GLOSSARY);
   const patterns = terms.map((t) => {
@@ -84,21 +83,15 @@ function parseWithGlossary(html) {
   });
   const combined = new RegExp(`(${patterns.join("|")})`, "g");
 
-  // แยก HTML tags ออก แล้วประมวลผลเฉพาะ text node
   const segments = html.split(/(<[^>]+>|<br\s*\/?>)/);
 
   return segments.flatMap((seg, si) => {
-    // HTML tag → คืนเป็น string ให้ dangerouslySetInnerHTML จัดการ
     if (seg.startsWith("<")) return [{ type: "html", val: seg, key: `h${si}` }];
-
-    // ไม่มี glossary term
     if (!combined.test(seg)) {
       combined.lastIndex = 0;
       return [{ type: "html", val: seg, key: `t${si}` }];
     }
     combined.lastIndex = 0;
-
-    // มี glossary term → แยกและ wrap
     return seg.split(combined).map((part, pi) =>
       GLOSSARY[part]
         ? { type: "gl", term: part, def: GLOSSARY[part], key: `g${si}-${pi}` }
@@ -107,7 +100,7 @@ function parseWithGlossary(html) {
   });
 }
 
-// ── formatAIText (เดิม ไม่เปลี่ยน) ──────────────────────────────
+// ── formatAIText ──────────────────────────────────────────────────
 function formatAIText(raw = "") {
   if (!raw) return "";
   let text = raw.trim();
@@ -128,7 +121,6 @@ function DetailField({ label, value, loading }) {
   return (
     <div className="flex flex-col gap-1.5">
       <p className="text-sm font-medium text-orange-500">{label}</p>
-
       <div className="w-full rounded-xl border border-gray-100
                       bg-gray-50 px-4 py-3 text-sm text-gray-700 leading-relaxed
                       shadow-sm whitespace-normal">
@@ -156,21 +148,19 @@ function DetailField({ label, value, loading }) {
   );
 }
 
-// ── Result (เดิม ไม่เปลี่ยนเลย) ──────────────────────────────────
+// ── Result ────────────────────────────────────────────────────────
 export default function Result() {
-  const { jobBox1, detail } = useContext(JobCompareContext1);
-  const { user }            = useContext(UserContext);
+  const { jobBox1, detail, uploadedCV } = useContext(JobCompareContext1);
+  const { user }                        = useContext(UserContext);
 
-  const [result, setResult]           = useState(initialState);
-  const [loading, setLoading]         = useState(false);
+  const [result, setResult]   = useState(initialState);
+  const [loading, setLoading] = useState(false);
 
   const hasJob  = jobBox1 && Object.keys(jobBox1).length > 0;
-  const isReady = hasJob && detail;
+  const isReady = hasJob && !!detail;
 
-  const base64ToFile = (base64, filename) => {
-    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-    return new File([bytes], filename, { type: "application/pdf" });
-  };
+  // ✅ มี CV ถ้ามี uploadedCV หรือ user.cv อย่างใดอย่างหนึ่ง
+  const hasCV = !!uploadedCV || !!user?.cv;
 
   useEffect(() => {
     if (!isReady) {
@@ -180,21 +170,27 @@ export default function Result() {
   }, [isReady]);
 
   useEffect(() => {
-    console.log("useEffect triggered");
-    console.log("isReady:", isReady);
-    console.log("user?.cv:", !!user?.cv);
-    console.log("hasJob:", hasJob);
-    console.log("detail:", !!detail);
-
-    if (!isReady || !user?.cv) return;
+    if (!isReady || !hasCV) return;
     matchResumeWithJob();
-  }, [detail, jobBox1]);
+  }, [detail, jobBox1, uploadedCV]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
 
   const matchResumeWithJob = async () => {
     try {
       setLoading(true);
       setResult({});
-      const file     = base64ToFile(user.cv, "resume.pdf");
+
+      let file;
+      if (uploadedCV) {
+        // ✅ ใช้ไฟล์ที่ upload ใหม่ก่อน
+        file = uploadedCV;
+      } else if (user?.cv) {
+        // ✅ fallback ใช้ CV ในบัญชี
+        const bytes = Uint8Array.from(atob(user.cv), (c) => c.charCodeAt(0));
+        file = new File([bytes], "resume.pdf", { type: "application/pdf" });
+      } else {
+        return;
+      }
+
       const formData = new FormData();
       formData.append("resume_file", file);
       formData.append("job_title", jobBox1.title);
@@ -216,6 +212,7 @@ export default function Result() {
     }
   };
 
+  // ── Empty state ────────────────────────────────────────────────
   if (!hasJob) {
     return (
       <div className="px-4 pb-8 pt-4 bg-white">
@@ -231,6 +228,23 @@ export default function Result() {
     );
   }
 
+  // ── ไม่มี CV เลย ───────────────────────────────────────────────
+  if (!hasCV) {
+    return (
+      <div className="px-4 pb-8 pt-4 bg-white">
+        <div className="rounded-2xl border border-dashed border-gray-200
+                        bg-gray-50 flex flex-col items-center justify-center py-16 gap-3">
+          <span className="text-4xl">📄</span>
+          <p className="text-sm font-medium text-gray-400">ยังไม่มีเรซูเม่</p>
+          <p className="text-xs text-gray-300 text-center">
+            อัปโหลด CV หรือเพิ่มเรซูเม่ในบัญชีก่อนเริ่มวิเคราะห์
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Loading detail ─────────────────────────────────────────────
   if (!detail) {
     return (
       <div className="px-4 pb-8 pt-4 bg-white">
@@ -245,6 +259,7 @@ export default function Result() {
     );
   }
 
+  // ── Result ─────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full">
       <div className="overflow-y-auto flex-1 max-h-[76.6vh] px-4 pb-8 pt-4 space-y-4
