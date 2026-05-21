@@ -171,19 +171,14 @@ export default function Result() {
     }
   }, [isReady]);
 
-  if (result) {
-    return 
-  } else if (isReady && hasCV) {
-    useEffect(() => {
-      if (!isReady || !hasCV) return;
-      matchResumeWithJob();
-    }, [detail, jobBox1]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
-  }
-
+  useEffect(() => {
+    if (!isReady || !hasCV) return;
+    matchResumeWithJob();
+  }, [detail]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
 
   const matchResumeWithJob = async () => {
-    // if (result && Object.keys(result).length > 0) return; 
-    setResult(initialState); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
+    if (result && Object.keys(result).length > 0) return; 
+    setResult({}); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
     try {
       setLoading(true);
 
