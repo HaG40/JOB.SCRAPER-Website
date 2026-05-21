@@ -165,57 +165,57 @@ export default function Result() {
   const hasCV = !!uploadedCV || !!user?.cv;
 
   useEffect(() => {
-    if (!isReady) {
+    // 1. เช็คเงื่อนไขความพร้อม: ถ้ายังไม่พร้อม หรือ ไม่มี CV ให้ล้างสถานะกลับเป็นค่าเริ่มต้นทันที
+    if (!isReady || !hasCV) {
       setResult(initialState);
       setLoading(false);
+      return; 
     }
-  }, [isReady]);
 
-  useEffect(() => {
-    if (!isReady || !hasCV) return;
+    // 2. เคลียร์ข้อมูลเก่าในผลลัพธ์ออกก่อน เพื่อให้เข้าเงื่อนไข "result ต้องไม่มีข้อมูลอยู่"
+    setResult(initialState);
+
+    // 3. เริ่มทำการดึงข้อมูลใหม่จาก API
     matchResumeWithJob();
-  }, [detail, jobBox1]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
+
+    // ใส่ Dependencies ให้ครบถ้วนตามที่เราเรียกใช้จริง
+  }, [isReady, hasCV, detail, jobBox1, uploadedCV, user?.cv]);
 
   const matchResumeWithJob = async () => {
-    if (result.relevance && result.relevance !== ""){
-      return;
-    }  
-    else{
-      setResult({}); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
-      try {
-        setLoading(true);
+    setResult({}); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
+    try {
+      setLoading(true);
 
-        let file;
-        if (uploadedCV) {
-          // ✅ ใช้ไฟล์ที่ upload ใหม่ก่อน
-          file = uploadedCV;
-        } else if (user?.cv) {
-          // ✅ fallback ใช้ CV ในบัญชี
-          const bytes = Uint8Array.from(atob(user.cv), (c) => c.charCodeAt(0));
-          file = new File([bytes], "resume.pdf", { type: "application/pdf" });
-        } else {
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append("resume_file", file);
-        formData.append("job_title", jobBox1.title);
-        formData.append("job_detail", detail);
-
-        const res  = await fetch(`${AI_API}/match`, { method: "POST", body: formData });
-        const data = await res.json();
-
-        setResult({
-          relevance:  data.relevance  ?? "",
-          experience: data.experience ?? "",
-          skills:     data.skills     ?? "",
-          summary:    data.summary    ?? "",
-        });
-      } catch (err) {
-        console.error("Match error:", err);
-      } finally {
-        setLoading(false);
+      let file;
+      if (uploadedCV) {
+        // ✅ ใช้ไฟล์ที่ upload ใหม่ก่อน
+        file = uploadedCV;
+      } else if (user?.cv) {
+        // ✅ fallback ใช้ CV ในบัญชี
+        const bytes = Uint8Array.from(atob(user.cv), (c) => c.charCodeAt(0));
+        file = new File([bytes], "resume.pdf", { type: "application/pdf" });
+      } else {
+        return;
       }
+
+      const formData = new FormData();
+      formData.append("resume_file", file);
+      formData.append("job_title", jobBox1.title);
+      formData.append("job_detail", detail);
+
+      const res  = await fetch(`${AI_API}/match`, { method: "POST", body: formData });
+      const data = await res.json();
+
+      setResult({
+        relevance:  data.relevance  ?? "",
+        experience: data.experience ?? "",
+        skills:     data.skills     ?? "",
+        summary:    data.summary    ?? "",
+      });
+    } catch (err) {
+      console.error("Match error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
