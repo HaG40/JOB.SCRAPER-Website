@@ -9,7 +9,7 @@ import { ToastContainer } from 'react-toastify';
 import { useEffect, useState, createContext } from 'react';
 import calculateAge from "./utils/CalculateAge";
 import { GO_API } from './utils/api';
-import { FaCodeBranch, FaUser, FaRightFromBracket, FaRightToBracket } from 'react-icons/fa';
+import { FaCodeBranch, FaUser, FaSignOutAlt , FaSignInAlt } from 'react-icons/fa';
 
 import JobMatcher from './components/job_matcher/JobMatcher';
 
@@ -108,7 +108,7 @@ function App() {
             to="/user/logout"
             className="flex items-center gap-2 opacity-80 hover:opacity-100 hover:underline text-sm pl-2 border-l border-white/30"
           >
-            <FaRightFromBracket />
+            <FaSignOutAlt  />
             ออกจากระบบ
           </Link>
         ) : (
@@ -117,7 +117,7 @@ function App() {
             className={`h-full flex items-center gap-2 px-2 hover:text-orange-50
               ${location.pathname === "/user/login" ? "border-b-2 border-white font-bold" : "opacity-90"}`}
           >
-            <FaRightToBracket />
+            <FaSignInAlt />
             เข้าสู่ระบบ
           </Link>
         )}
