@@ -177,43 +177,45 @@ export default function Result() {
   }, [detail, jobBox1]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
 
   const matchResumeWithJob = async () => {
-    // if (result && Object.keys(result).length > 0) return; 
-    // setResult({}); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
-    try {
-      setLoading(true);
+    if (result.relevance && result.relevance !== ""){
+      return;
+    }  
+    else{
+      setResult({}); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
+      try {
+        setLoading(true);
 
-      let file;
-      if (uploadedCV) {
-        // ✅ ใช้ไฟล์ที่ upload ใหม่ก่อน
-        file = uploadedCV;
-      } else if (user?.cv) {
-        // ✅ fallback ใช้ CV ในบัญชี
-        const bytes = Uint8Array.from(atob(user.cv), (c) => c.charCodeAt(0));
-        file = new File([bytes], "resume.pdf", { type: "application/pdf" });
-      } else {
-        return;
+        let file;
+        if (uploadedCV) {
+          // ✅ ใช้ไฟล์ที่ upload ใหม่ก่อน
+          file = uploadedCV;
+        } else if (user?.cv) {
+          // ✅ fallback ใช้ CV ในบัญชี
+          const bytes = Uint8Array.from(atob(user.cv), (c) => c.charCodeAt(0));
+          file = new File([bytes], "resume.pdf", { type: "application/pdf" });
+        } else {
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("resume_file", file);
+        formData.append("job_title", jobBox1.title);
+        formData.append("job_detail", detail);
+
+        const res  = await fetch(`${AI_API}/match`, { method: "POST", body: formData });
+        const data = await res.json();
+
+        setResult({
+          relevance:  data.relevance  ?? "",
+          experience: data.experience ?? "",
+          skills:     data.skills     ?? "",
+          summary:    data.summary    ?? "",
+        });
+      } catch (err) {
+        console.error("Match error:", err);
+      } finally {
+        setLoading(false);
       }
-
-      const formData = new FormData();
-      formData.append("resume_file", file);
-      formData.append("job_title", jobBox1.title);
-      formData.append("job_detail", detail);
-
-      const res  = await fetch(`${AI_API}/match`, { method: "POST", body: formData });
-      const data = await res.json();
-
-      setResult({
-        relevance:  data.relevance  ?? "",
-        experience: data.experience ?? "",
-        skills:     data.skills     ?? "",
-        summary:    data.summary    ?? "",
-      });
-    } catch (err) {
-      console.error("Match error:", err);
-    } finally {
-      setLoading(false);
-      setFirstLoad(false); // ✅ หลังจากโหลดครั้งแรกแล้ว ให้ตั้งเป็น false
-      isReady(false);
     }
   };
 
