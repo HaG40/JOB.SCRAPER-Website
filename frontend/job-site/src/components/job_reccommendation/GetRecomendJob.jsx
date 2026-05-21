@@ -27,26 +27,27 @@ const validateFile = async (file) => {
 };
 
 function GetRecommendJob(props) {
-  const { user }                = useContext(UserContext);
+  const { user }                               = useContext(UserContext);
   const { jobBox1, setJobBox1, setUploadedCV } = useContext(JobCompareContext1);
 
-  // ✅ hasAccountCV = มี keywords แล้ว หรือ มี onAnalyzeAccount ให้เรียกได้
   const hasAccountCV =
     (Array.isArray(props.recommend) && props.recommend.length > 0) ||
     !!props.onAnalyzeAccount;
 
-  const [source, setSource]               = useState(hasAccountCV ? SOURCE.ACCOUNT : SOURCE.UPLOAD);
-  const [results, setResults]             = useState([]);
-  const [addedJobs, setAddedJobs]         = useState([]);
-  const [isLoading, setIsLoading]         = useState(false);
+  const [source, setSource]             = useState(hasAccountCV ? SOURCE.ACCOUNT : SOURCE.UPLOAD);
+  const [results, setResults]           = useState([]);
+  const [addedJobs, setAddedJobs]       = useState([]);
+  const [isLoading, setIsLoading]       = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
-  const [jobSelected, setJobSelected]     = useState(false);
-  const [uploadedFile, setUploadedFile]   = useState(null);
-  const [analyzing, setAnalyzing]   = useState(false);
-  const [fetchDone, setFetchDone]   = useState(false);
+  const [jobSelected, setJobSelected]   = useState(false);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [analyzing, setAnalyzing]       = useState(false);
+  const [fetchDone, setFetchDone]       = useState(false);
 
-  // ✅ ref สำหรับรอ props.recommend update หลัง onAnalyzeAccount
   const fileInputRef = useRef(null);
+
+  
+  const abortRef = useRef(null);
 
   const keywords = Array.isArray(props.recommend)
     ? props.recommend.map((k) => (typeof k === "string" ? k.trim() : "")).filter(Boolean).slice(0, 5)
@@ -55,12 +56,21 @@ function GetRecommendJob(props) {
   const cacheKey = `recommend_${keywords.join("_")}`;
   const loading  = isLoading || uploadLoading;
 
-  // ✅ canAnalyze: ACCOUNT ให้ผ่านถ้ามี onAnalyzeAccount แม้ keywords ยังว่าง
   const canAnalyze =
     (source === SOURCE.ACCOUNT && (keywords.length > 0 || !!props.onAnalyzeAccount)) ||
     (source === SOURCE.UPLOAD  && uploadedFile !== null);
 
-  // ── Select / Unselect ─────────────────────────────────────────
+  
+  const cancelFetch = () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    setIsLoading(false);
+    setUploadLoading(false);
+  };
+
+  
   const handleSelect = (job) => {
     if (!jobBox1 || Object.keys(jobBox1).length === 0) {
       setJobBox1(job);
@@ -81,25 +91,28 @@ function GetRecommendJob(props) {
 
   const isAdded = (job) =>
     addedJobs.some((j) => j.title === job.title && j.company === job.company);
-
-  // ── Switch source ─────────────────────────────────────────────
-const handleSourceSwitch = (next) => {
-  if (next === source) return;
-  setSource(next);
-  setResults([]);
-  setUploadedFile(null);
-  setUploadedCV(null);  
-  setAddedJobs([]);
-  setJobSelected(false);
-  setAnalyzing(false);
-  setFetchDone(false);
-  setJobBox1({});
-};
+  
+  const handleSourceSwitch = (next) => {
+    if (next === source) return;
+    cancelFetch();           
+    setSource(next);
+    setResults([]);
+    setUploadedFile(null);
+    setUploadedCV(null);     
+    setAddedJobs([]);
+    setJobSelected(false);
+    setAnalyzing(false);
+    setFetchDone(false);
+    setJobBox1({});          
+  };
 
   const handleAnalyze = async () => {
     if (!canAnalyze) return;
     setAnalyzing(true);
-    setFetchDone(false); // reset ทุกครั้งที่เริ่มใหม่
+    setFetchDone(false);
+    
+    abortRef.current = new AbortController();
+    const { signal } = abortRef.current;
 
     if (source === SOURCE.ACCOUNT) {
       if (keywords.length === 0 && props.onAnalyzeAccount) {
@@ -107,47 +120,55 @@ const handleSourceSwitch = (next) => {
         setResults([]);
         try {
           const returnedKeywords = await props.onAnalyzeAccount();
+          if (signal.aborted) return;
           if (Array.isArray(returnedKeywords) && returnedKeywords.length > 0) {
             const kws    = returnedKeywords.map((k) => typeof k === "string" ? k.trim() : "").filter(Boolean).slice(0, 5);
-            const unique = await fetchJobsByKeywords(kws);
+            const unique = await fetchJobsByKeywords(kws, signal);
+            if (signal.aborted) return;
             setResults(unique);
             const key = `recommend_${kws.join("_")}`;
             localStorage.setItem(key, JSON.stringify({ data: unique, timestamp: Date.now() }));
           }
-        } catch { setResults([]); }
-        finally { setIsLoading(false); setFetchDone(true); } // ✅ set หลัง fetch จริงๆ
+        } catch (e) {
+          if (e?.name !== "AbortError") setResults([]);
+        } finally {
+          if (!signal.aborted) { setIsLoading(false); setFetchDone(true); }
+        }
       } else {
-        await loadData();
-        setFetchDone(true);
+        await loadData(signal);
+        if (!signal.aborted) setFetchDone(true);
       }
     }
 
     if (source === SOURCE.UPLOAD && uploadedFile) {
-      await fetchByUpload(uploadedFile);
-      setFetchDone(true);
+      await fetchByUpload(uploadedFile, signal);
+      if (!signal.aborted) setFetchDone(true);
     }
   };
 
-  // ── Fetch by keywords (shared) ────────────────────────────────
-  const fetchJobsByKeywords = async (kws) => {
+  const fetchJobsByKeywords = async (kws, signal) => {
     const collected = [];
     for (const keyword of kws) {
+      if (signal?.aborted) break;
       try {
         const res = await fetch(
-          `${GO_API}/jobs/recommend/search?keyword=${encodeURIComponent(keyword)}`
+          `${GO_API}/jobs/recommend/search?keyword=${encodeURIComponent(keyword)}`,
+          { signal }
         );
         if (!res.ok) continue;
         const data = await res.json();
         if (Array.isArray(data)) collected.push(...data);
-      } catch (err) { console.error(`Failed: ${keyword}`, err); }
+      } catch (e) {
+        if (e?.name === "AbortError") break;
+        console.error(`Failed: ${keyword}`, e);
+      }
     }
     return collected.filter(
       (job, i, self) => i === self.findIndex((j) => j.title === job.title && j.company === job.company)
     );
   };
-
-  // ── Fetch by account keywords (with cache) ────────────────────
-  const loadData = async () => {
+  
+  const loadData = async (signal) => {
     try {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -155,31 +176,36 @@ const handleSourceSwitch = (next) => {
         if (Date.now() - parsed.timestamp < CACHE_TTL) { setResults(parsed.data); return; }
         localStorage.removeItem(cacheKey);
       }
-      await fetchByKeywords();
-    } catch { await fetchByKeywords(); }
+      await fetchByKeywords(signal);
+    } catch { await fetchByKeywords(signal); }
   };
 
-  const fetchByKeywords = async () => {
+  const fetchByKeywords = async (signal) => {
     setIsLoading(true);
     setResults([]);
     try {
       if (!keywords.length) return;
-      const unique = await fetchJobsByKeywords(keywords);
+      const unique = await fetchJobsByKeywords(keywords, signal);
+      if (signal?.aborted) return;
       setResults(unique);
       localStorage.setItem(cacheKey, JSON.stringify({ data: unique, timestamp: Date.now() }));
-    } catch { setResults([]); }
-    finally { setIsLoading(false); }
+    } catch (e) {
+      if (e?.name !== "AbortError") setResults([]);
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
   };
 
   const handleReload = async () => {
+    cancelFetch();
     setJobBox1({});
     setJobSelected(false);
     localStorage.removeItem(cacheKey);
     toast.info("รีโหลดข้อมูลใหม่...");
-    await fetchByKeywords();
+    abortRef.current = new AbortController();
+    await fetchByKeywords(abortRef.current.signal);
   };
-
-  // ── Upload new CV ─────────────────────────────────────────────
+  
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -187,49 +213,53 @@ const handleSourceSwitch = (next) => {
     const error = await validateFile(file);
     if (error) { toast.error(error); return; }
     setUploadedFile(file);
-    setUploadedCV(file);   // ✅ บอก context ว่ามี CV ใหม่
+    setUploadedCV(file);
     setResults([]);
     setAnalyzing(false);
   };
-
-  // ✅ fetchByUpload: ส่งไฟล์ → ได้ keywords → ค้นหา job listings จริงๆ
-  const fetchByUpload = async (file) => {
+  
+  const fetchByUpload = async (file, signal) => {
     setUploadLoading(true);
     setResults([]);
     try {
       const formData = new FormData();
       formData.append("resume_file", file);
-      const res = await fetch(`${AI_API}/recommend/cv`, { method: "POST", body: formData });
+      const res = await fetch(`${AI_API}/recommend/cv`, { method: "POST", body: formData, signal });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      if (signal?.aborted) return;
 
-      // /recommend/cv คืน keywords (job titles) ไม่ใช่ job objects
       const uploadKeywords = Array.isArray(data.jobs)
         ? data.jobs.map((k) => (typeof k === "string" ? k.trim() : "")).filter(Boolean).slice(0, 5)
         : [];
 
       if (uploadKeywords.length === 0) {
-        toast.error("ไม่สามารถวิเคราะห์ CV ได้ กรุณาลองใหม่");
-        setResults([]);
+        toast.error("ไม่สามารถวิเคราะห์เรซูเม่ได้ กรุณาลองใหม่");
         return;
       }
-
-      // ✅ นำ keywords ไปค้นหา job listings จริงๆ
-      const unique = await fetchJobsByKeywords(uploadKeywords);
+      const unique = await fetchJobsByKeywords(uploadKeywords, signal);
+      if (signal?.aborted) return;
       setResults(unique);
-      toast.success("วิเคราะห์ CV สำเร็จ");
-    } catch (err) {
-      console.error("Upload error:", err);
-      toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่");
-      setResults([]);
-    } finally { setUploadLoading(false); }
+      toast.success("วิเคราะห์เรซูเม่ สำเร็จ");
+    } catch (e) {
+      if (e?.name !== "AbortError") {
+        console.error("Upload error:", e);
+        toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่");
+        setResults([]);
+      }
+    } finally {
+      if (!signal?.aborted) setUploadLoading(false);
+    }
   };
-
+  
   const handleClearUpload = () => {
+    cancelFetch();         
     setUploadedFile(null);
-    setUploadedCV(null);  
+    setUploadedCV(null);   
     setResults([]);
     setAnalyzing(false);
+    setFetchDone(false);
+    setJobBox1({});        
   };
 
   return (
@@ -237,38 +267,33 @@ const handleSourceSwitch = (next) => {
 
       {/* ── Source Selector ──────────────────────────────────────── */}
       <div className="flex rounded-xl border border-gray-100 bg-gray-50 p-1 gap-1">
-      <div className="relative group flex-1">
-        <button
-          type="button"
-          disabled={!hasAccountCV}
-          onClick={() => hasAccountCV && handleSourceSwitch(SOURCE.ACCOUNT)}
-          className={`w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg
-                      text-xs font-medium transition-all
-                      ${
-                        hasAccountCV
+        <div className="relative group flex-1">
+          <button
+            type="button"
+            disabled={!hasAccountCV}
+            onClick={() => hasAccountCV && handleSourceSwitch(SOURCE.ACCOUNT)}
+            className={`w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg
+                        text-xs font-medium transition-all
+                        ${hasAccountCV
                           ? source === SOURCE.ACCOUNT
                             ? "bg-white shadow-sm text-orange-500 border border-orange-100"
                             : "text-gray-400 hover:text-gray-500"
                           : "bg-gray-100 text-gray-300 cursor-not-allowed"
-                      }`}
-        >
-          <FaUser size={10} />
-          เรซูเม่ในของผู้ใช้
-        </button>
-
-        {!hasAccountCV && (
-          <div
-            className="absolute left-2/3 -translate-x-1/2 -bottom-9
-                      opacity-0 group-hover:opacity-100
-                      transition-opacity duration-200
-                      pointer-events-none
-                      bg-orange-600 text-white text-[11px]
-                      px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg"
+                        }`}
           >
-            ยังไม่มีเรซูเม่ในบัญชี ไปอัปโหลดที่หน้าโปรไฟล์ก่อน
-          </div>
-        )}
-      </div>
+            <FaUser size={10} />
+            เรซูเม่ของผู้ใช้
+          </button>
+
+          {!hasAccountCV && (
+            <div className="absolute left-2/3 -translate-x-1/2 -bottom-9
+                            opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                            pointer-events-none bg-orange-600 text-white text-[11px]
+                            px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
+              ยังไม่มีเรซูเม่ในบัญชี ไปอัปโหลดที่หน้าโปรไฟล์ก่อน
+            </div>
+          )}
+        </div>
 
         <button
           type="button"
@@ -336,7 +361,7 @@ const handleSourceSwitch = (next) => {
                       }`}
         >
           <FaSearch size={12} />
-          {source === SOURCE.ACCOUNT ? "วิเคราะห์จากเรซูเม่ในบัญชี" : "วิเคราะห์จาก CV ที่อัปโหลด"}
+          {source === SOURCE.ACCOUNT ? "วิเคราะห์จากเรซูเม่ของผู้ใช้" : "วิเคราะห์จาก เรซูเม่ ที่อัปโหลด"}
         </button>
       )}
 
@@ -345,11 +370,12 @@ const handleSourceSwitch = (next) => {
         <div className="flex flex-col items-center py-10 gap-3">
           <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-200 border-t-orange-400" />
           <p className="text-sm text-gray-400">
-            {uploadLoading ? "กำลังวิเคราะห์ CV..." : "กำลังค้นหางาน..."}
+            {uploadLoading ? "กำลังวิเคราะห์ เรซูเม่..." : "กำลังค้นหางาน..."}
           </p>
         </div>
       )}
 
+      {/* ── Empty ────────────────────────────────────────────────── */}
       {!loading && fetchDone && results.length === 0 && (
         <div className="flex flex-col items-center py-8 gap-2">
           <span className="text-2xl">🔍</span>
@@ -357,8 +383,8 @@ const handleSourceSwitch = (next) => {
         </div>
       )}
 
-      {/* ── Placeholder ก่อนกดวิเคราะห์ ─────────────────────────── */}
-      {!loading && !analyzing &&  (
+      {/* ── Placeholder ──────────────────────────────────────────── */}
+      {!loading && !analyzing && (
         <div className="flex flex-col items-center py-8 gap-2">
           <span className="text-2xl">
             {source === SOURCE.UPLOAD && !uploadedFile ? "📤" : "✨"}

@@ -15,7 +15,7 @@ function JobMatcher() {
   const [jobBox1, setJobBox1] = useState({});
   const [detail, setDetail]   = useState("");
   const [activeTab, setActiveTab] = useState("recommend");
-  const [uploadedCV, setUploadedCV] = useState(null); // ✅ เพิ่ม
+  const [uploadedCV, setUploadedCV] = useState(null); 
 
   const changeTab = (tabKey) => {
     setJobBox1({});

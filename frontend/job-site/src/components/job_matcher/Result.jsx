@@ -150,7 +150,7 @@ function DetailField({ label, value, loading }) {
 
 // ── Result ────────────────────────────────────────────────────────
 export default function Result() {
-  const isFetching = useRef(false); // 💡 ตัวนี้จะเป็นโล่กำบัง ไม่ให้มีการ fetch ซ้อนเด็ดขาด
+  const isFetching = useRef(false); 
   const lastFetchedKey = useRef("");
   const { jobBox1, detail, uploadedCV } = useContext(JobCompareContext1);
   const { user }                        = useContext(UserContext);
@@ -158,19 +158,18 @@ export default function Result() {
   const [result, setResult]   = useState(initialState);
   const [loading, setLoading] = useState(false);
 
-  const [firstLoad, setFirstLoad] = useState(true); // ✅ state เพื่อติดตามการโหลดครั้งแรก
+  const [firstLoad, setFirstLoad] = useState(true); 
 
   const hasJob  = jobBox1 && Object.keys(jobBox1).length > 0;
   const isReady = hasJob && !!detail;
 
-  // ✅ มี CV ถ้ามี uploadedCV หรือ user.cv อย่างใดอย่างหนึ่ง
   const hasCV = !!uploadedCV || !!user?.cv;
 
   useEffect(() => {
     if (!isReady || !hasCV) {
       setResult(initialState);
       setLoading(false);
-      lastFetchedKey.current = ""; // ล้างค่าความจำเมื่อเคลียร์ฟอร์ม
+      lastFetchedKey.current = ""; 
       return;
     }
 
@@ -178,19 +177,17 @@ export default function Result() {
   }, [isReady, hasCV, detail, jobBox1, uploadedCV, user?.cv]);
 
   const matchResumeWithJob = async () => {
-    // สร้าง Key จำลองขึ้นมาเพื่อดูว่า งาน + CV ชุดนี้เคยยิงไปหรือยัง
     const currentKey = `${jobBox1?.title}-${detail}-${uploadedCV?.name || user?.cv?.substring(0,20)}`;
-    
-    // 🛑 ดักจับขั้นเด็ดขาด: ถ้ากำลัง Fetch อยู่ หรือเป็นข้อมูลชุดเดิมเป๊ะๆ -> ให้หยุดทำงานทันที!
+
     if (isFetching.current || lastFetchedKey.current === currentKey) {
       return;
     }
 
     try {
       setLoading(true);
-      isFetching.current = true; // 🔒 ล็อกประตูทันที ห้ามใครเข้ามา fetch ซ้อน
-      lastFetchedKey.current = currentKey; // จำคีย์ปัจจุบันไว้
-      setResult(initialState); // เคลียร์ผลลัพธ์เก่าตามเงื่อนไขที่คุณต้องการ
+      isFetching.current = true; 
+      lastFetchedKey.current = currentKey; 
+      setResult(initialState);
 
       let file;
       if (uploadedCV) {
@@ -219,10 +216,10 @@ export default function Result() {
       });
     } catch (err) {
       console.error("Match error:", err);
-      lastFetchedKey.current = ""; // ถ้าพัง ให้เคลียร์คีย์ทิ้ง เพื่อให้กดลองใหม่ได้
+      lastFetchedKey.current = ""; 
     } finally {
       setLoading(false);
-      isFetching.current = false; // 🔓 ปลดล็อกประตูเมื่อทำงานเสร็จสิ้น
+      isFetching.current = false; 
     }
   };
 
