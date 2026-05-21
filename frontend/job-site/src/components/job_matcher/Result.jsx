@@ -171,7 +171,7 @@ export default function Result() {
     }
   }, [isReady]);
 
-  if (result && Object.keys(result).length > 0) {
+  if (result && Object.values(result).length > 0) {
     return 
   } else if (isReady && hasCV) {
     useEffect(() => {
