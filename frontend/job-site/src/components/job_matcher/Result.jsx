@@ -177,8 +177,8 @@ export default function Result() {
   }, [detail, jobBox1, uploadedCV]); // ✅ trigger ใหม่เมื่อ uploadedCV เปลี่ยน
 
   const matchResumeWithJob = async () => {
-          setResult({});
           if (result.relevance && result.relevance !== "" && !uploadedCV && !firstLoad) return; // ✅ ถ้ามีผลลัพธ์แล้ว ไม่ต้องเรียก API ซ้ำ
+          setResult(initialState); // ✅ รีเซ็ตผลลัพธ์ก่อนโหลดใหม่
     try {
       setLoading(true);
 
