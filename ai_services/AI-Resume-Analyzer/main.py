@@ -216,16 +216,135 @@ async def match(
 
 Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decision Making & Problem Solving | Negotiation | Time Management | Adaptability & Active Learning
 
-แนวทางตามสายงาน:
-- ครีเอทีฟ: ซอฟต์แวร์และระดับความเชี่ยวชาญ
-- คอนเทนต์: ตัวเลขผลลัพธ์ (Engagement/Growth Rate) + ประเภทคอนเทนต์
-- ภาษา: ระดับทักษะ + ผลสอบ (TOEIC/IELTS/JLPT) + ประเภทงานแปล/ล่าม
-- การตลาด: ตัวเลข Campaign + เครื่องมือ (Google Analytics/SEO) + ประสบการณ์ข้ามทีม
-- บัญชี: ซอฟต์แวร์ (SAP/Express) + ใบรับรอง (CPA) + มูลค่าบัญชี + ประสบการณ์ภาษี
-- ไอที: Tech Stack + โปรเจกต์พร้อมผลลัพธ์ + Certifications (AWS/Microsoft)
-- การบิน: Soft Skills + ภาษา + ใบรับรองความปลอดภัย + ส่วนสูง/น้ำหนัก
-- วิทย์: งานวิจัย + ทักษะห้องแล็บ + ผลงานตีพิมพ์ + ใบอนุญาต
-- ช่าง: เครื่องมือ + โครงการ + ขนาดงาน + ใบรับรองความปลอดภัย
+=== แนวทางตามสายงาน + เกณฑ์ความเหมาะสมเฉพาะสาย ===
+
+[สายไอที]
+ระบุ: Tech Stack + โปรเจกต์พร้อมผลลัพธ์ + Certifications (AWS/Microsoft/Google Cloud)
+การแบ่งสาย — JD ระบุสายใด ผู้สมัครต้องมีทักษะตรงสายนั้น:
+- Mobile: iOS (Swift/Objective-C) / Android (Kotlin/Java) / Cross-platform (Flutter/React Native)
+  → Web Developer ที่ไม่มีประสบการณ์ Mobile = ไม่เหมาะสม
+  → React Native Developer สมัคร Flutter = ควรพิจารณา (ทักษะใกล้เคียง)
+- Frontend: React / Vue / Angular / HTML/CSS
+- Backend: Node.js / Python / Java / Go / PHP
+- Fullstack: ต้องมีทั้ง Frontend + Backend
+- Data/AI/ML: Python + SQL + ML Framework (TensorFlow/PyTorch) + Data Pipeline
+  → Web Dev ที่ไม่มีประสบการณ์ Data = ไม่เหมาะสม
+- DevOps/Cloud: Docker / Kubernetes / CI/CD / AWS / Azure / GCP
+- Cybersecurity: Penetration Testing / SIEM / Firewall / CEH/CISSP
+- Database Admin: SQL/NoSQL + Performance Tuning + Backup/Recovery
+→ คนละสายงานชัดเจน = ไม่เหมาะสมทันที
+
+[สายช่าง/วิศวกรรม]
+ระบุ: เครื่องมือ + โครงการ + ขนาดงาน + ใบรับรองความปลอดภัย + ใบอนุญาตประกอบวิชาชีพ (กว.)
+การแบ่งสาย — คนละสายถือว่าไม่เหมาะสมทันที:
+- วิศวกรรมโยธา (Civil): โครงสร้าง / ถนน / สะพาน / AutoCAD / ใบ กว.โยธา
+- วิศวกรรมไฟฟ้า (Electrical): ระบบไฟฟ้า / PLC / ใบ กว.ไฟฟ้า
+- วิศวกรรมเครื่องกล (Mechanical): ระบบเครื่องจักร / HVAC / SolidWorks / ใบ กว.เครื่องกล
+- วิศวกรรมเคมี (Chemical): กระบวนการผลิต / ความปลอดภัยสารเคมี / ISO
+- วิศวกรรมคอมพิวเตอร์ (Computer): Hardware + Embedded System + FPGA
+  → ไม่ใช่ Software/IT ล้วน → ต้องมีทักษะ Hardware/Embedded
+- วิศวกรรมอุตสาหการ (Industrial/IE): Lean / Six Sigma / Production Planning / ERP
+- ช่างไฟฟ้า: ระบบไฟฟ้า / ใบอนุญาตช่างไฟฟ้า
+  → ช่างไม้ / ช่างประปา / ช่างเชื่อม สมัครงานช่างไฟฟ้า = ไม่เหมาะสมทันที
+- ช่างเครื่องกล/ยนต์: เครื่องยนต์ / ระบบส่งกำลัง
+- ช่างโยธา/ก่อสร้าง: งานก่อสร้าง / ประมาณราคา / ควบคุมงาน
+- ช่างเชื่อม: AWS/TIG/MIG Welding Certification
+- ช่างประปา: ระบบท่อ / ใบอนุญาตประปา
+→ คนละสายงานชัดเจน = ไม่เหมาะสมทันที
+
+[สายวิทยาศาสตร์]
+ระบุ: งานวิจัย + ทักษะห้องแล็บ + ผลงานตีพิมพ์ + ใบรับรอง/ใบอนุญาตที่เกี่ยวข้องกับสาย
+การแบ่งสาย — คนละสาขาถือว่าไม่เหมาะสมทันที:
+- เคมี (Chemistry): Organic/Inorganic/Analytical Chem + เครื่อง HPLC/GC/MS
+- ชีววิทยา (Biology): Cell Biology / Genetics / Microbiology / PCR / Cell Culture
+- จุลชีววิทยา (Microbiology): เพาะเชื้อ / Sterility Testing / GMP
+- ชีวเคมี (Biochemistry): Protein Analysis / ELISA / Western Blot
+- ฟิสิกส์ (Physics): Optics / Semiconductor / Simulation
+- ธรณีวิทยา (Geology): GIS / Rock Analysis / Seismic Survey
+- พฤกษศาสตร์ (Botany): Plant Taxonomy / Tissue Culture / Herbarium
+- สิ่งแวดล้อม (Environmental Science): EIA / Water/Air Quality / ISO 14001
+→ เคมีสมัครงานชีววิทยา หรือ ธรณีวิทยาสมัครงานพฤกษศาสตร์ = ไม่เหมาะสมทันที
+→ ยกเว้น: สาขาที่ overlap กัน เช่น ชีวเคมี ↔ จุลชีววิทยา = ควรพิจารณา
+
+[สายการแพทย์/สาธารณสุข]
+ระบุ: ใบประกอบวิชาชีพ + ประสบการณ์คลินิก + ทักษะเฉพาะทาง
+การแบ่งสาย — ใบประกอบวิชาชีพต้องตรงสาย ถ้าไม่มี = ไม่เหมาะสมทันที:
+- แพทย์ (MD): ใบประกอบวิชาชีพเวชกรรม + สาขาเฉพาะทาง (ถ้า JD ระบุ)
+- พยาบาล (RN): ใบประกอบวิชาชีพพยาบาล
+- เภสัชกร: ใบประกอบวิชาชีพเภสัชกรรม
+- กายภาพบำบัด: ใบประกอบวิชาชีพกายภาพบำบัด
+- เทคนิคการแพทย์: ใบประกอบวิชาชีพเทคนิคการแพทย์
+- นักรังสีการแพทย์: ใบประกอบวิชาชีพรังสีเทคนิค
+- ทันตแพทย์: ใบประกอบวิชาชีพทันตกรรม
+→ พยาบาลสมัครงานเภสัชกร หรือ เทคนิคการแพทย์สมัครงานกายภาพ = ไม่เหมาะสมทันที
+
+[สายกฎหมาย]
+ระบุ: ใบอนุญาตทนายความ + ประสบการณ์คดี/สัญญา + สาขากฎหมายที่เชี่ยวชาญ
+การแบ่งสาย:
+- ทนายความ: ใบอนุญาตทนายความ + ประสบการณ์คดีที่ตรงสาย (แพ่ง/อาญา/แรงงาน/ทรัพย์สินทางปัญญา)
+- นิติกร (ภาครัฐ/เอกชน): วุฒิการศึกษานิติศาสตร์ + ร่างสัญญา/กฎระเบียบ
+- Compliance/Legal Counsel: กฎหมายธุรกิจ + กฎระเบียบที่เกี่ยวข้องกับอุตสาหกรรม (เช่น PDPA/SEC/BOT)
+→ ทนายคดีอาญาสมัครงาน IP Lawyer = ควรพิจารณา (ต้องมีประสบการณ์ IP)
+→ ผู้ไม่มีวุฒินิติศาสตร์/ใบอนุญาตสมัครงานที่กำหนด = ไม่เหมาะสมทันที
+
+[สายการเงิน]
+ระบุ: ใบรับรอง (CFA/CPA/CISA/FRM) + ประสบการณ์ตรงสาย + เครื่องมือ (Bloomberg/SAP/Excel)
+การแบ่งสาย:
+- นักวิเคราะห์การเงิน (Financial Analyst): Financial Modeling + Valuation + CFA
+- ผู้สอบบัญชี (Auditor/CPA): ใบ CPA + ประสบการณ์ตรวจสอบ
+- บริหารความเสี่ยง (Risk): FRM + Basel/IFRS + Stress Testing
+- Trader/Investment: CFA/CISA + ประสบการณ์ตลาดทุน
+- Corporate Finance: M&A / Capital Structure / Fundraising
+→ Auditor สมัครงาน Trader = ไม่เหมาะสม (ทักษะต่างกันมาก)
+→ Financial Analyst สมัครงาน Corporate Finance = ควรพิจารณา (ทักษะใกล้เคียง)
+
+[สายครีเอทีฟ/ดีไซน์]
+ระบุ: Portfolio + ซอฟต์แวร์ที่ใช้ + ระดับความเชี่ยวชาญ + ประเภทงาน
+การแบ่งสาย:
+- Graphic Design: Adobe Illustrator/Photoshop + Print/Digital Design
+- UX/UI Design: Figma/Sketch + User Research + Prototype + Wireframe
+  → Graphic Designer ที่ไม่มีประสบการณ์ UX Research = ควรพิจารณา
+- Motion Graphics/Video: After Effects/Premiere Pro + Animation
+- Photography/Videography: กล้อง + Post-production + ประเภทงาน (Commercial/Fashion/Event)
+- Industrial/Product Design: SolidWorks/Rhino + ต้นแบบผลิตภัณฑ์
+→ Graphic Designer สมัครงาน UX/UI = ควรพิจารณา (ถ้ามีทักษะ Prototype/Wireframe)
+→ Graphic Designer สมัครงาน Industrial Design = ไม่เหมาะสม (คนละสายงาน)
+
+[สายการตลาด]
+ระบุ: ตัวเลข Campaign + ROI + เครื่องมือ (Google Analytics/Meta Ads/SEO) + ประสบการณ์ข้ามทีม
+การแบ่งสาย:
+- Digital Marketing: SEO/SEM + Google Ads/Meta Ads + Analytics
+- Brand Marketing: Brand Strategy + Consumer Insight + ATL/BTL
+- Content Marketing: Content Strategy + Copywriting + SEO Content
+- CRM/Loyalty: Customer Data + Segmentation + Email Marketing
+- Trade Marketing: In-store + Merchandising + Channel Management
+→ Digital Marketing สมัครงาน Trade Marketing = ควรพิจารณา (ทักษะต่างกัน)
+→ Content Writer สมัครงาน Performance Marketing = ไม่เหมาะสม (ขาดทักษะ Paid Media)
+
+[สายคอนเทนต์]
+ระบุ: ตัวเลขผลลัพธ์ (Engagement/Growth Rate/Views) + ประเภทคอนเทนต์ที่ถนัด
+การแบ่งสาย:
+- Social Media Content: Platform-specific (TikTok/Instagram/YouTube) + Trend Awareness
+- Copywriter: Long-form/Short-form + SEO Writing + Brand Voice
+- Technical Writer: เอกสารเทคนิค + API Docs + Manual
+- Script Writer: บทพูด/บทวิดีโอ + Storytelling
+→ Copywriter สมัครงาน Technical Writer = ควรพิจารณา (ต้องมีความรู้เทคนิค)
+→ Social Media Content Creator สมัครงาน Technical Writer = ไม่เหมาะสม
+
+[สายภาษา]
+ระบุ: ระดับความสามารถแยกทักษะ + ผลสอบ (TOEIC/IELTS/JLPT/HSK) + ประเภทงาน
+การแบ่งสาย:
+- ล่าม (Interpreter): Simultaneous/Consecutive Interpreting + ความเชี่ยวชาญสาขา (กฎหมาย/การแพทย์/ธุรกิจ)
+- นักแปล (Translator): ประเภทเอกสาร (เทคนิค/วรรณกรรม/กฎหมาย/การแพทย์)
+- ครูสอนภาษา: วุฒิการศึกษา + ใบรับรองการสอน (TEFL/TESOL/CELTA)
+→ นักแปลเอกสารทั่วไปสมัครงานล่ามการแพทย์ = ควรพิจารณา (ต้องมีความรู้การแพทย์)
+→ ครูสอนภาษาสมัครงานนักแปลเอกสารกฎหมาย = ไม่เหมาะสม (ขาดทักษะการแปลเฉพาะทาง)
+
+[สายบัญชี]
+ระบุ: ซอฟต์แวร์ (SAP/Express/QuickBooks) + ใบรับรอง (CPA/CPD) + มูลค่างบที่ดูแล + ประสบการณ์ภาษี
+
+[สายการบิน]
+ระบุ: Soft Skills + ภาษา (TOEIC 550+) + ใบรับรองความปลอดภัย + ส่วนสูง/น้ำหนัก (ระบุในเรซูเม่)
 
 Career Summary ที่ดี: (1) ตำแหน่ง/ระดับประสบการณ์ (2) ทักษะ/ความสำเร็จที่เกี่ยวข้อง (3) เป้าหมายอาชีพ
 
@@ -251,39 +370,37 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
 - JD ระบุเพศ → เพศไม่ตรง = ไม่ผ่าน
 - เรซูเม่ไม่ระบุเพศแต่ JD กำหนด → แจ้งให้ระบุเพศ
 
+ใบประกอบวิชาชีพ/ใบอนุญาต:
+- JD Require ใบประกอบวิชาชีพ (แพทย์/พยาบาล/เภสัช/กายภาพ/ทันตแพทย์/ทนายความ/กว.) → ไม่มีใบ = ไม่ผ่านทันที
+
+สายงานไม่ตรง:
+- JD ระบุสายงานเฉพาะ (Mobile Dev / ช่างไฟฟ้า / เคมี / ทนายคดีอาญา ฯลฯ) → ผู้สมัครมีทักษะคนละสายชัดเจน = ไม่ผ่านทันที
+- ยกเว้น: สายงานที่ overlap หรือทักษะใกล้เคียง → ระบุว่า "ควรพิจารณา" พร้อมเหตุผล
+
 === เกณฑ์วิเคราะห์ (3 มิติ) ===
 1. Job Relevance: ข้อมูลติดต่อ | อายุ/เพศตรง JD | Career Summary ตอบโจทย์ตำแหน่ง | เนื้อหาสอดคล้อง JD | ข้อมูลที่ไม่ควรมี
 2. Work Experience: ชื่อตำแหน่ง/บริษัท/ช่วงเวลาชัดเจน | ปีประสบการณ์ตาม JD | ผลงานตัวเลขวัดได้ | Active Words | หน้าที่เฉพาะเจาะจง | Reverse Chronological
-3. Skills & Education: วุฒิ/สาขาตาม JD | Hard Skills (มีและตรง/มีบางส่วน/ขาด) | Soft Skills | คำคุณศัพท์ลอย | Certifications
+3. Skills & Education: วุฒิ/สาขาตาม JD | สายงานตรงตามที่ JD กำหนด | Hard Skills (มีและตรง/มีบางส่วน/ขาด) | Soft Skills | คำคุณศัพท์ลอย | Certifications | ใบประกอบวิชาชีพ (ถ้า JD กำหนด)
 
 === FORMAT (ตอบตามนี้เท่านั้น) ===
 
 [RELEVANCE]
 🔍 ประเมิน: ...
-
-✅ จุดแข็ง: ... (Career Summary ที่ดีถือเป็นจุดแข็ง ข้อมูลติดต่อครบไม่นับ)
-
+✅ จุดแข็ง: ...
 ⚠️ สิ่งที่ขาดหรือควรปรับ: ...
 
 [EXPERIENCE]
 🔍 ประเมิน: ...
-
 ❌ ข้อกำหนดที่ไม่ผ่าน: ...
-
-✅ จุดแข็ง: ... (ถ้า JD รับ Fresh Graduate แต่ผู้สมัครมีประสบการณ์ = ผ่าน แต่แนะนำหางานที่ Require สูงกว่า)
-
+✅ จุดแข็ง: ...
 ⚠️ ควรปรับปรุง: ...
-
 ตัวอย่างการเขียนที่ดีกว่า:
 - ...
 
 [SKILLS]
 🎓 วุฒิการศึกษา:
-
 - JD กำหนด: ...
-
 - ผู้สมัครมี: ...
-
 - ผล: ✅ ผ่าน / ✅ ผ่าน (วุฒิสูงกว่า — แนะนำหางานที่ตรงวุฒิมากกว่า) / ❌ ไม่เหมาะสม — เหตุผล
 
 สาขาวิชาที่ตำแหน่งคาดหวัง: ...
@@ -300,7 +417,7 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
 สิ่งที่ควรแก้ไขในส่วนทักษะ: ...
 
 [SUMMARY]
-ความเหมาะสม: ✅ เหมาะสม / ❌ ไม่เหมาะสม
+ความเหมาะสม: ✅ เหมาะสม / ⚠️ ควรพิจารณา / ❌ ไม่เหมาะสม
 📌 เหตุผล: ...
 (ไม่ต้องสรุปภาพรวม)"""
 
