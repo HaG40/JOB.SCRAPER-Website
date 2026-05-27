@@ -141,7 +141,6 @@ func JobSearchForRecommendation(w http.ResponseWriter, r *http.Request) {
 		for {
 			randomNumber = rand.Intn(max-min+1) + min
 
-			// 🔥 ถ้าเลขซ้ำ
 			if randomNumber == lastNumber {
 				if repeatCount >= 4 {
 					continue

@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useRef, useState, useMemo } from "react";
 import { UserContext } from "../../App";
 import { JobCompareContext1 } from "../job_matcher/JobMatcher";
 import { FaPlus, FaMinus, FaSync, FaUpload, FaTimes, FaUser, FaFileAlt, FaSearch } from "react-icons/fa";
@@ -11,14 +11,17 @@ const ACCEPTED_EXT   = ".pdf,.jpg,.jpeg,.png";
 const SOURCE         = { ACCOUNT: "account", UPLOAD: "upload" };
 
 const getPdfPageCount = async (file) => {
-  const text = await file.text();
-  const matches = text.match(/\/Type[\s]*\/Page[^s]/g);
-  return matches ? matches.length : 1;
+  try {
+    const text = await file.text();
+    const matches = text.match(/\/Type[\s]*\/Page[^s]/g);
+    return matches ? matches.length : 1;
+  } catch {
+    return 1; // Fallback หากเกิดข้อผิดพลาดในการอ่านไฟล์
+  }
 };
 
 const validateFile = async (file) => {
-  if (!ACCEPTED_TYPES.includes(file.type))
-    return "รองรับเฉพาะไฟล์ PDF, JPG, JPEG, PNG เท่านั้น";
+  if (!ACCEPTED_TYPES.includes(file.type)) return "รองรับเฉพาะไฟล์ PDF, JPG, JPEG, PNG เท่านั้น";
   if (file.type === "application/pdf") {
     const pages = await getPdfPageCount(file);
     if (pages > 1) return `เรซูเม่ต้องมีเพียง 1 หน้าเท่านั้น (ไฟล์นี้มี ${pages} หน้า)`;
@@ -27,12 +30,10 @@ const validateFile = async (file) => {
 };
 
 function GetRecommendJob(props) {
-  const { user }                               = useContext(UserContext);
+  const { user } = useContext(UserContext);
   const { jobBox1, setJobBox1, setUploadedCV } = useContext(JobCompareContext1);
 
-  const hasAccountCV =
-    (Array.isArray(props.recommend) && props.recommend.length > 0) ||
-    !!props.onAnalyzeAccount;
+  const hasAccountCV = (Array.isArray(props.recommend) && props.recommend.length > 0) || !!props.onAnalyzeAccount;
 
   const [source, setSource]             = useState(hasAccountCV ? SOURCE.ACCOUNT : SOURCE.UPLOAD);
   const [results, setResults]           = useState([]);
@@ -43,24 +44,25 @@ function GetRecommendJob(props) {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [analyzing, setAnalyzing]       = useState(false);
   const [fetchDone, setFetchDone]       = useState(false);
+  const [currentKeywords, setCurrentKeywords] = useState([]); 
 
   const fileInputRef = useRef(null);
-
-  
   const abortRef = useRef(null);
 
-  const keywords = Array.isArray(props.recommend)
-    ? props.recommend.map((k) => (typeof k === "string" ? k.trim() : "")).filter(Boolean).slice(0, 5)
-    : [];
+  const accountKeywords = useMemo(() => {
+    return Array.isArray(props.recommend)
+      ? props.recommend.map((k) => (typeof k === "string" ? k.trim() : "")).filter(Boolean).slice(0, 5)
+      : [];
+  }, [props.recommend]);
 
-  const cacheKey = `recommend_${keywords.join("_")}`;
-  const loading  = isLoading || uploadLoading;
+  const cacheKey = useMemo(() => {
+    const kws = currentKeywords.length > 0 ? currentKeywords : accountKeywords;
+    return `recommend_${kws.join("_")}`;
+  }, [currentKeywords, accountKeywords]);
 
-  const canAnalyze =
-    (source === SOURCE.ACCOUNT && (keywords.length > 0 || !!props.onAnalyzeAccount)) ||
-    (source === SOURCE.UPLOAD  && uploadedFile !== null);
+  const loading = isLoading || uploadLoading;
+  const canAnalyze = (source === SOURCE.ACCOUNT && (accountKeywords.length > 0 || !!props.onAnalyzeAccount)) || (source === SOURCE.UPLOAD && uploadedFile !== null);
 
-  
   const cancelFetch = () => {
     if (abortRef.current) {
       abortRef.current.abort();
@@ -70,7 +72,6 @@ function GetRecommendJob(props) {
     setUploadLoading(false);
   };
 
-  
   const handleSelect = (job) => {
     if (!jobBox1 || Object.keys(jobBox1).length === 0) {
       setJobBox1(job);
@@ -89,8 +90,7 @@ function GetRecommendJob(props) {
     toast.info("นำงานออกแล้ว");
   };
 
-  const isAdded = (job) =>
-    addedJobs.some((j) => j.title === job.title && j.company === job.company);
+  const isAdded = (job) => addedJobs.some((j) => j.title === job.title && j.company === job.company);
   
   const handleSourceSwitch = (next) => {
     if (next === source) return;
@@ -103,9 +103,39 @@ function GetRecommendJob(props) {
     setJobSelected(false);
     setAnalyzing(false);
     setFetchDone(false);
+    setCurrentKeywords([]);
     setJobBox1({});          
   };
 
+  const fetchJobsByKeywords = async (kws, signal) => {
+    if (!kws.length) return [];
+    try {
+      const fetchPromises = kws.map(async (keyword) => {
+        try {
+          const res = await fetch(
+            `${GO_API}/jobs/recommend/search?keyword=${encodeURIComponent(keyword)}`,
+            { signal }
+          );
+          if (!res.ok) return [];
+          const data = await res.json();
+          return Array.isArray(data) ? data : [];
+        } catch (e) {
+          return [];
+        }
+      });
+
+      const allResults = await Promise.all(fetchPromises);
+      if (signal?.aborted) return [];
+      
+      const collected = allResults.flat();
+      return collected.filter(
+        (job, i, self) => i === self.findIndex((j) => j.title === job.title && j.company === job.company)
+      );
+    } catch {
+      return [];
+    }
+  };
+  
   const handleAnalyze = async () => {
     if (!canAnalyze) return;
     setAnalyzing(true);
@@ -115,14 +145,15 @@ function GetRecommendJob(props) {
     const { signal } = abortRef.current;
 
     if (source === SOURCE.ACCOUNT) {
-      if (keywords.length === 0 && props.onAnalyzeAccount) {
+      if (accountKeywords.length === 0 && props.onAnalyzeAccount) {
         setIsLoading(true);
         setResults([]);
         try {
           const returnedKeywords = await props.onAnalyzeAccount();
           if (signal.aborted) return;
           if (Array.isArray(returnedKeywords) && returnedKeywords.length > 0) {
-            const kws    = returnedKeywords.map((k) => typeof k === "string" ? k.trim() : "").filter(Boolean).slice(0, 5);
+            const kws = returnedKeywords.map((k) => typeof k === "string" ? k.trim() : "").filter(Boolean).slice(0, 5);
+            setCurrentKeywords(kws);
             const unique = await fetchJobsByKeywords(kws, signal);
             if (signal.aborted) return;
             setResults(unique);
@@ -135,7 +166,8 @@ function GetRecommendJob(props) {
           if (!signal.aborted) { setIsLoading(false); setFetchDone(true); }
         }
       } else {
-        await loadData(signal);
+        setCurrentKeywords(accountKeywords);
+        await loadData(accountKeywords, signal);
         if (!signal.aborted) setFetchDone(true);
       }
     }
@@ -146,49 +178,30 @@ function GetRecommendJob(props) {
     }
   };
 
-  const fetchJobsByKeywords = async (kws, signal) => {
-    const collected = [];
-    for (const keyword of kws) {
-      if (signal?.aborted) break;
-      try {
-        const res = await fetch(
-          `${GO_API}/jobs/recommend/search?keyword=${encodeURIComponent(keyword)}`,
-          { signal }
-        );
-        if (!res.ok) continue;
-        const data = await res.json();
-        if (Array.isArray(data)) collected.push(...data);
-      } catch (e) {
-        if (e?.name === "AbortError") break;
-        console.error(`Failed: ${keyword}`, e);
-      }
-    }
-    return collected.filter(
-      (job, i, self) => i === self.findIndex((j) => j.title === job.title && j.company === job.company)
-    );
-  };
-  
-  const loadData = async (signal) => {
+  const loadData = async (kws, signal) => {
     try {
-      const cached = localStorage.getItem(cacheKey);
+      const tempKey = `recommend_${kws.join("_")}`;
+      const cached = localStorage.getItem(tempKey);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Date.now() - parsed.timestamp < CACHE_TTL) { setResults(parsed.data); return; }
-        localStorage.removeItem(cacheKey);
+        localStorage.removeItem(tempKey);
       }
-      await fetchByKeywords(signal);
-    } catch { await fetchByKeywords(signal); }
+      await fetchByKeywords(kws, signal);
+    } catch { 
+      await fetchByKeywords(kws, signal); 
+    }
   };
 
-  const fetchByKeywords = async (signal) => {
+  const fetchByKeywords = async (kws, signal) => {
     setIsLoading(true);
     setResults([]);
     try {
-      if (!keywords.length) return;
-      const unique = await fetchJobsByKeywords(keywords, signal);
+      const unique = await fetchJobsByKeywords(kws, signal);
       if (signal?.aborted) return;
       setResults(unique);
-      localStorage.setItem(cacheKey, JSON.stringify({ data: unique, timestamp: Date.now() }));
+      const tempKey = `recommend_${kws.join("_")}`;
+      localStorage.setItem(tempKey, JSON.stringify({ data: unique, timestamp: Date.now() }));
     } catch (e) {
       if (e?.name !== "AbortError") setResults([]);
     } finally {
@@ -196,7 +209,7 @@ function GetRecommendJob(props) {
     }
   };
 
-const handleReload = async () => {
+  const handleReload = async () => {
     cancelFetch();
     setJobBox1({});
     setJobSelected(false);
@@ -206,9 +219,12 @@ const handleReload = async () => {
     abortRef.current = new AbortController();
     const { signal } = abortRef.current;
 
+    const kws = currentKeywords.length > 0 ? currentKeywords : accountKeywords;
+
     if (source === SOURCE.ACCOUNT) {
-      localStorage.removeItem(cacheKey);
-      await fetchByKeywords(signal);
+      const tempKey = `recommend_${kws.join("_")}`;
+      localStorage.removeItem(tempKey);
+      await fetchByKeywords(kws, signal);
       if (!signal.aborted) setFetchDone(true);
     } else if (source === SOURCE.UPLOAD && uploadedFile) {
       await fetchByUpload(uploadedFile, signal);
@@ -247,6 +263,8 @@ const handleReload = async () => {
         toast.error("ไม่สามารถวิเคราะห์เรซูเม่ได้ กรุณาลองใหม่");
         return;
       }
+      
+      setCurrentKeywords(uploadKeywords);
       const unique = await fetchJobsByKeywords(uploadKeywords, signal);
       if (signal?.aborted) return;
       setResults(unique);
@@ -269,10 +287,11 @@ const handleReload = async () => {
     setResults([]);
     setAnalyzing(false);
     setFetchDone(false);
+    setCurrentKeywords([]);
     setJobBox1({});        
   };
 
-  return (
+return (
     <div className="flex flex-col gap-3 px-1">
 
       {/* ── Source Selector ──────────────────────────────────────── */}

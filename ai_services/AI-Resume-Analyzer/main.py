@@ -223,7 +223,7 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 การแบ่งสาย — JD ระบุสายใด ผู้สมัครต้องมีทักษะตรงสายนั้น:
 - Mobile: iOS (Swift/Objective-C) / Android (Kotlin/Java) / Cross-platform (Flutter/React Native)
   → Web Developer ที่ไม่มีประสบการณ์ Mobile = ไม่เหมาะสม
-  → React Native Developer สมัคร Flutter = ควรพิจารณา (ทักษะใกล้เคียง)
+  → React Native Developer สมัคร Flutter = ปรับปรุงเพิ่ม (ทักษะใกล้เคียง)
 - Frontend: React / Vue / Angular / HTML/CSS
 - Backend: Node.js / Python / Java / Go / PHP
 - Fullstack: ต้องมีทั้ง Frontend + Backend
@@ -264,7 +264,7 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 - พฤกษศาสตร์ (Botany): Plant Taxonomy / Tissue Culture / Herbarium
 - สิ่งแวดล้อม (Environmental Science): EIA / Water/Air Quality / ISO 14001
 → เคมีสมัครงานชีววิทยา หรือ ธรณีวิทยาสมัครงานพฤกษศาสตร์ = ไม่เหมาะสมทันที
-→ ยกเว้น: สาขาที่ overlap กัน เช่น ชีวเคมี ↔ จุลชีววิทยา = ควรพิจารณา
+→ ยกเว้น: สาขาที่ overlap กัน เช่น ชีวเคมี ↔ จุลชีววิทยา = ปรับปรุงเพิ่ม
 
 [สายการแพทย์/สาธารณสุข]
 ระบุ: ใบประกอบวิชาชีพ + ประสบการณ์คลินิก + ทักษะเฉพาะทาง
@@ -284,7 +284,7 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 - ทนายความ: ใบอนุญาตทนายความ + ประสบการณ์คดีที่ตรงสาย (แพ่ง/อาญา/แรงงาน/ทรัพย์สินทางปัญญา)
 - นิติกร (ภาครัฐ/เอกชน): วุฒิการศึกษานิติศาสตร์ + ร่างสัญญา/กฎระเบียบ
 - Compliance/Legal Counsel: กฎหมายธุรกิจ + กฎระเบียบที่เกี่ยวข้องกับอุตสาหกรรม (เช่น PDPA/SEC/BOT)
-→ ทนายคดีอาญาสมัครงาน IP Lawyer = ควรพิจารณา (ต้องมีประสบการณ์ IP)
+→ ทนายคดีอาญาสมัครงาน IP Lawyer = ปรับปรุงเพิ่ม (ต้องมีประสบการณ์ IP)
 → ผู้ไม่มีวุฒินิติศาสตร์/ใบอนุญาตสมัครงานที่กำหนด = ไม่เหมาะสมทันที
 
 [สายการเงิน]
@@ -296,18 +296,18 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 - Trader/Investment: CFA/CISA + ประสบการณ์ตลาดทุน
 - Corporate Finance: M&A / Capital Structure / Fundraising
 → Auditor สมัครงาน Trader = ไม่เหมาะสม (ทักษะต่างกันมาก)
-→ Financial Analyst สมัครงาน Corporate Finance = ควรพิจารณา (ทักษะใกล้เคียง)
+→ Financial Analyst สมัครงาน Corporate Finance = ปรับปรุงเพิ่ม (ทักษะใกล้เคียง)
 
 [สายครีเอทีฟ/ดีไซน์]
 ระบุ: Portfolio + ซอฟต์แวร์ที่ใช้ + ระดับความเชี่ยวชาญ + ประเภทงาน
 การแบ่งสาย:
 - Graphic Design: Adobe Illustrator/Photoshop + Print/Digital Design
 - UX/UI Design: Figma/Sketch + User Research + Prototype + Wireframe
-  → Graphic Designer ที่ไม่มีประสบการณ์ UX Research = ควรพิจารณา
+  → Graphic Designer ที่ไม่มีประสบการณ์ UX Research = ปรับปรุงเพิ่ม
 - Motion Graphics/Video: After Effects/Premiere Pro + Animation
 - Photography/Videography: กล้อง + Post-production + ประเภทงาน (Commercial/Fashion/Event)
 - Industrial/Product Design: SolidWorks/Rhino + ต้นแบบผลิตภัณฑ์
-→ Graphic Designer สมัครงาน UX/UI = ควรพิจารณา (ถ้ามีทักษะ Prototype/Wireframe)
+→ Graphic Designer สมัครงาน UX/UI = ปรับปรุงเพิ่ม (ถ้ามีทักษะ Prototype/Wireframe)
 → Graphic Designer สมัครงาน Industrial Design = ไม่เหมาะสม (คนละสายงาน)
 
 [สายการตลาด]
@@ -318,7 +318,7 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 - Content Marketing: Content Strategy + Copywriting + SEO Content
 - CRM/Loyalty: Customer Data + Segmentation + Email Marketing
 - Trade Marketing: In-store + Merchandising + Channel Management
-→ Digital Marketing สมัครงาน Trade Marketing = ควรพิจารณา (ทักษะต่างกัน)
+→ Digital Marketing สมัครงาน Trade Marketing = ปรับปรุงเพิ่ม (ทักษะต่างกัน)
 → Content Writer สมัครงาน Performance Marketing = ไม่เหมาะสม (ขาดทักษะ Paid Media)
 
 [สายคอนเทนต์]
@@ -328,7 +328,7 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 - Copywriter: Long-form/Short-form + SEO Writing + Brand Voice
 - Technical Writer: เอกสารเทคนิค + API Docs + Manual
 - Script Writer: บทพูด/บทวิดีโอ + Storytelling
-→ Copywriter สมัครงาน Technical Writer = ควรพิจารณา (ต้องมีความรู้เทคนิค)
+→ Copywriter สมัครงาน Technical Writer = ปรับปรุงเพิ่ม (ต้องมีความรู้เทคนิค)
 → Social Media Content Creator สมัครงาน Technical Writer = ไม่เหมาะสม
 
 [สายภาษา]
@@ -337,7 +337,7 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 - ล่าม (Interpreter): Simultaneous/Consecutive Interpreting + ความเชี่ยวชาญสาขา (กฎหมาย/การแพทย์/ธุรกิจ)
 - นักแปล (Translator): ประเภทเอกสาร (เทคนิค/วรรณกรรม/กฎหมาย/การแพทย์)
 - ครูสอนภาษา: วุฒิการศึกษา + ใบรับรองการสอน (TEFL/TESOL/CELTA)
-→ นักแปลเอกสารทั่วไปสมัครงานล่ามการแพทย์ = ควรพิจารณา (ต้องมีความรู้การแพทย์)
+→ นักแปลเอกสารทั่วไปสมัครงานล่ามการแพทย์ = ปรับปรุงเพิ่ม (ต้องมีความรู้การแพทย์)
 → ครูสอนภาษาสมัครงานนักแปลเอกสารกฎหมาย = ไม่เหมาะสม (ขาดทักษะการแปลเฉพาะทาง)
 
 [สายบัญชี]
@@ -375,7 +375,7 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
 
 สายงานไม่ตรง:
 - JD ระบุสายงานเฉพาะ (Mobile Dev / ช่างไฟฟ้า / เคมี / ทนายคดีอาญา ฯลฯ) → ผู้สมัครมีทักษะคนละสายชัดเจน = ไม่ผ่านทันที
-- ยกเว้น: สายงานที่ overlap หรือทักษะใกล้เคียง → ระบุว่า "ควรพิจารณา" พร้อมเหตุผล
+- ยกเว้น: สายงานที่ overlap หรือทักษะใกล้เคียง → ระบุว่า "ปรับปรุงเพิ่ม" พร้อมเหตุผล
 
 === เกณฑ์วิเคราะห์ (3 มิติ) ===
 1. Job Relevance: ข้อมูลติดต่อ | อายุ/เพศตรง JD | Career Summary ตอบโจทย์ตำแหน่ง | เนื้อหาสอดคล้อง JD | ข้อมูลที่ไม่ควรมี
