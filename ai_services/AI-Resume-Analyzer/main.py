@@ -348,7 +348,7 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 [สายไอที]
 ระบุ: Tech Stack + โปรเจกต์พร้อมผลลัพธ์ + Certifications (AWS/Microsoft/Google Cloud)
 การแบ่งสาย — JD ระบุสายใด ผู้สมัครต้องมีทักษะตรงสายนั้น:
-- Mobile: iOS (Swift/Objective-C) / Android (Kotlin/Java) / Cross-platform (Flutter/React Native) → Web Developer ที่ไม่มีประสบการณ์ Mobile = ไม่เหมาะสม | React Native Developer สมัคร Flutter = ควรพิจารณา
+- Mobile: iOS (Swift/Objective-C) / Android (Kotlin/Java) / Cross-platform (Flutter/React Native) → Web Developer ที่ไม่มีประสบการณ์ Mobile = ไม่เหมาะสม | React Native Developer สมัคร Flutter = ควรปรับปรุง
 - Frontend: React / Vue / Angular / HTML/CSS
 - Backend: Node.js / Python / Java / Go / PHP
 - Fullstack: ต้องมีทั้ง Frontend + Backend
@@ -369,7 +369,7 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 
 [สายวิทยาศาสตร์]
 - เคมี: HPLC/GC/MS | ชีววิทยา: PCR/Cell Culture | จุลชีววิทยา: GMP | ชีวเคมี: ELISA | ฟิสิกส์: Semiconductor | ธรณีวิทยา: GIS | พฤกษศาสตร์: Tissue Culture | สิ่งแวดล้อม: EIA
-→ คนละสาขาชัดเจน = ไม่เหมาะสมทันที | ยกเว้น overlap เช่น ชีวเคมี ↔ จุลชีววิทยา = ควรพิจารณา
+→ คนละสาขาชัดเจน = ไม่เหมาะสมทันที | ยกเว้น overlap เช่น ชีวเคมี ↔ จุลชีววิทยา = ควรปรับปรุง
 
 [สายการแพทย์/สาธารณสุข]
 ใบประกอบวิชาชีพต้องตรงสาย ถ้าไม่มี = ไม่เหมาะสมทันที
@@ -379,11 +379,11 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 
 [สายการเงิน]
 - Financial Analyst: CFA | Auditor: CPA | Risk: FRM | Trader: CFA/CISA | Corporate Finance: M&A
-→ Auditor สมัคร Trader = ไม่เหมาะสม | Financial Analyst สมัคร Corporate Finance = ควรพิจารณา
+→ Auditor สมัคร Trader = ไม่เหมาะสม | Financial Analyst สมัคร Corporate Finance = ควรปรับปรุง
 
 [สายครีเอทีฟ/ดีไซน์]
 - Graphic: Illustrator/Photoshop | UX/UI: Figma+User Research | Motion: After Effects | Industrial: SolidWorks/Rhino
-→ Graphic Designer สมัคร UX/UI = ควรพิจารณา (ถ้ามี Prototype) | สมัคร Industrial Design = ไม่เหมาะสม
+→ Graphic Designer สมัคร UX/UI = ควรปรับปรุง (ถ้ามี Prototype) | สมัคร Industrial Design = ไม่เหมาะสม
 
 [สายการตลาด]
 - Digital: SEO/SEM/Analytics | Brand: ATL/BTL | Content: Copywriting | CRM: Segmentation | Trade: In-store
@@ -411,7 +411,7 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
 - JD ระบุอายุ → ไม่ตรง = ไม่ผ่าน | ไม่ระบุอายุแต่ JD กำหนด = แจ้งให้ระบุ
 - JD ระบุเพศ → ไม่ตรง = ไม่ผ่าน
 - ใบประกอบวิชาชีพ (แพทย์/พยาบาล/เภสัช/กายภาพ/ทันตแพทย์/ทนายความ/กว.) → ไม่มี = ไม่ผ่านทันที
-- สายงานต่างกันชัดเจน → ไม่ผ่านทันที | Overlap → ควรพิจารณา
+- สายงานต่างกันชัดเจน → ไม่ผ่านทันที | Overlap → ควรปรับปรุง
 
 === FORMAT (ตอบตามนี้เท่านั้น) ===
 
@@ -448,7 +448,7 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
 สิ่งที่ควรแก้ไขในส่วนทักษะ: ...
 
 [SUMMARY]
-ความเหมาะสม: ✅ เหมาะสม / ⚠️ ควรพิจารณา / ❌ ไม่เหมาะสม
+ความเหมาะสม: ✅ เหมาะสม / ⚠️ ควรปรับปรุง / ❌ ไม่เหมาะสม
 📌 เหตุผล: ..."""
 
         user_prompt = f"""กรุณาประเมินเรซูเม่ต่อไปนี้ตามเกณฑ์โดยเทียบกับรายละเอียดงานที่ให้ไว้
