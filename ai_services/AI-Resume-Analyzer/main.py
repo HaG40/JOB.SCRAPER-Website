@@ -9,8 +9,10 @@ from PIL import Image
 from pdf2image import convert_from_bytes
 from pydantic import BaseModel
 from io import BytesIO
+from contextlib import asynccontextmanager
 
 import pytesseract
+import numpy as np
 import os
 import re
 import base64
@@ -18,13 +20,136 @@ import base64
 load_dotenv()
 API_KEY = os.getenv("GROQ_API_KEY")
 
-app = FastAPI(title="AI Resume Analyzer API")
+pytesseract.pytesseract.tesseract_cmd = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
+POPPLER_PATH = r"C:/Program Files/poppler-25.07.0/Library/bin"
+
+EMBED_MODEL = "nomic-embed-text-v1_5"
+
+# =========================
+# JOB ROLE CATALOG
+# คำอธิบายแต่ละบทบาทควรครอบคลุม skills, tools, context
+# เพื่อให้ semantic similarity ทำงานได้ดี
+# =========================
+
+JOB_ROLES = {
+    # ── IT ──────────────────────────────────────────────────────────────
+    "Mobile Developer":
+        "iOS Android Flutter React Native Swift Kotlin mobile app development cross-platform UI/UX push notification REST API Firebase",
+    "Frontend Developer":
+        "React Vue Angular HTML CSS JavaScript TypeScript responsive design UI component Tailwind Bootstrap web interface",
+    "Backend Developer":
+        "Node.js Python Go Java Spring Django REST API GraphQL database SQL authentication microservices server-side",
+    "Full Stack Developer":
+        "React Node.js JavaScript TypeScript HTML CSS REST API PostgreSQL MongoDB full stack web frontend backend Git agile",
+    "Data Analyst":
+        "SQL Python R Excel Tableau Power BI statistics data visualization business intelligence reporting data cleaning pandas pivot table",
+    "Data Engineer":
+        "ETL pipeline Apache Spark Kafka Airflow AWS GCP BigQuery data warehouse Hadoop Scala Python data infrastructure",
+    "Data Scientist / ML Engineer":
+        "machine learning deep learning TensorFlow PyTorch scikit-learn Python statistics NLP computer vision model training feature engineering",
+    "DevOps / Cloud Engineer":
+        "Docker Kubernetes CI/CD Jenkins GitHub Actions AWS Azure GCP Terraform Linux bash infrastructure automation monitoring",
+    "Cybersecurity Engineer":
+        "penetration testing SIEM firewall network security CEH CISSP vulnerability assessment incident response SOC",
+    "Database Administrator":
+        "SQL NoSQL PostgreSQL MySQL MongoDB performance tuning backup recovery replication query optimization DBA",
+    "QA / Test Engineer":
+        "software testing unit test integration test automation Selenium JUnit pytest test plan bug report quality assurance",
+
+    # ── Engineering ──────────────────────────────────────────────────────
+    "Civil Engineer":
+        "structural design AutoCAD STAAD road bridge construction project management ใบ กว.โยธา site survey",
+    "Electrical Engineer":
+        "electrical system PLC SCADA wiring diagram power system ใบ กว.ไฟฟ้า control panel maintenance",
+    "Mechanical Engineer":
+        "machine design SolidWorks AutoCAD HVAC manufacturing maintenance ใบ กว.เครื่องกล CNC production",
+    "Industrial / IE Engineer":
+        "Lean Six Sigma production planning ERP process improvement kaizen factory layout time study supply chain",
+    "Chemical Engineer":
+        "process engineering chemical plant safety ISO HAZOP reaction engineering fluid mechanics material balance",
+
+    # ── Science ──────────────────────────────────────────────────────────
+    "Chemist / Chemical Analyst":
+        "organic chemistry analytical chemistry HPLC GC mass spectrometry laboratory research formulation QC",
+    "Biologist / Microbiologist":
+        "cell biology PCR microbiology sterility testing cell culture genetics GMP laboratory research",
+    "Environmental Scientist":
+        "EIA environmental impact assessment water quality air quality ISO 14001 sustainability monitoring",
+
+    # ── Finance / Accounting ──────────────────────────────────────────────
+    "Accountant":
+        "accounting SAP Express QuickBooks financial report tax CPA CPD audit balance sheet bookkeeping",
+    "Financial Analyst":
+        "financial modeling valuation DCF Excel Bloomberg CFA investment analysis budget forecasting P&L",
+    "Auditor":
+        "internal audit external audit CPA risk assessment compliance IFRS financial statement verification",
+    "Risk Manager":
+        "risk management FRM Basel IFRS stress testing credit risk market risk regulatory compliance",
+
+    # ── Marketing / Content ───────────────────────────────────────────────
+    "Digital Marketing":
+        "SEO SEM Google Ads Meta Ads Google Analytics performance marketing content strategy social media ROI",
+    "Brand Marketing":
+        "brand strategy ATL BTL consumer insight campaign management market research creative brief media plan",
+    "Content Creator / Copywriter":
+        "copywriting content writing SEO blog social media engagement storytelling brand voice script video",
+    "Graphic Designer":
+        "Adobe Illustrator Photoshop InDesign visual design print digital layout typography branding portfolio",
+    "UX/UI Designer":
+        "Figma Sketch user research wireframe prototype usability testing user journey interaction design",
+
+    # ── Healthcare / Legal / HR ──────────────────────────────────────────
+    "Medical Doctor":
+        "ใบประกอบวิชาชีพเวชกรรม clinical diagnosis treatment patient care hospital ward OPD",
+    "Nurse":
+        "ใบประกอบวิชาชีพพยาบาล patient care ward ICU medication nursing assessment vital signs",
+    "Pharmacist":
+        "ใบประกอบวิชาชีพเภสัชกรรม drug dispensing pharmacy clinical pharmacology medication counseling",
+    "Lawyer / Legal Officer":
+        "ใบอนุญาตทนายความ contract drafting legal research litigation compliance corporate law",
+    "HR / Recruiter":
+        "human resources recruitment talent acquisition payroll performance management HRIS labor law training",
+    "Translator / Interpreter":
+        "translation interpretation TOEIC IELTS JLPT multilingual document localization proofreading",
+
+    # ── Aviation / Hospitality ────────────────────────────────────────────
+    "Flight Attendant / Cabin Crew":
+        "airline cabin crew customer service TOEIC safety certificate hospitality communication height weight",
+    "Hotel / Hospitality":
+        "hotel management front desk food and beverage housekeeping guest service tourism customer experience",
+}
+
+# =========================
+# Pre-computed job embeddings (ทำครั้งเดียวตอน startup)
+# =========================
+job_embeddings: dict[str, list[float]] = {}
+
+# =========================
+# APP
+# =========================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Pre-compute job role embeddings ตอน startup"""
+    print("⏳ Pre-computing job role embeddings...")
+    for role, description in JOB_ROLES.items():
+        resp = client.embeddings.create(
+            model=EMBED_MODEL,
+            input=description,
+        )
+        job_embeddings[role] = resp.data[0].embedding
+    print(f"✅ Embedded {len(job_embeddings)} job roles")
+    yield
+
+app = FastAPI(title="AI Resume Analyzer API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://job-scraper-frontend-fawn.vercel.app",
         "https://job-scraper-frontend-fawn.vercel.app/",
+        "http://localhost:5173",
+        "http://localhost:5173/",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -32,11 +157,6 @@ app.add_middleware(
 )
 
 client = Groq(api_key=API_KEY)
-
-conversation_history = []
-resume_uploaded = False
-resume_cache = ""
-interview_history = []
 
 # =========================
 # HELPERS
@@ -47,47 +167,90 @@ def extract_text(uploaded_file) -> str:
         filename = uploaded_file.filename.lower()
         uploaded_file.file.seek(0)
         content = uploaded_file.file.read()
-
         if filename.endswith(".pdf"):
-            images = convert_from_bytes(content)
+            images = convert_from_bytes(content, poppler_path=POPPLER_PATH)
             text = ""
             for img in images:
                 text += pytesseract.image_to_string(img, lang="eng+tha") + "\n"
             return text.strip()
-
         elif filename.endswith((".png", ".jpg", ".jpeg")):
             image = Image.open(BytesIO(content))
-            text = pytesseract.image_to_string(image, lang="eng+tha")
-            return text.strip()
-
+            return pytesseract.image_to_string(image, lang="eng+tha").strip()
         return "Unsupported file format"
-
     except Exception as e:
         return f"Error extracting text: {str(e)}"
-
-
-def extract_scores(text: str):
-    pattern = r'(\d+(?:\.\d+)?)%'
-    matches = re.findall(pattern, text)
-    return [float(m) for m in matches]
 
 
 def file_to_base64(file: UploadFile) -> str:
     content_type = file.content_type
     file.file.seek(0)
     file_bytes = file.file.read()
-
     if content_type == "application/pdf":
-        images = convert_from_bytes(file_bytes)
-        img = images[0]
-        buffer = BytesIO()
-        img.save(buffer, format="JPEG")
-        return base64.b64encode(buffer.getvalue()).decode("utf-8")
-
+        images = convert_from_bytes(file_bytes, poppler_path=POPPLER_PATH)
+        buf = BytesIO()
+        images[0].save(buf, format="JPEG")
+        return base64.b64encode(buf.getvalue()).decode("utf-8")
     elif content_type in ["image/jpeg", "image/jpg", "image/png"]:
         return base64.b64encode(file_bytes).decode("utf-8")
-
     raise ValueError("ไฟล์ต้องเป็น PDF, JPG หรือ PNG เท่านั้น")
+
+
+def cosine_similarity(a: list[float], b: list[float]) -> float:
+    """Cosine similarity ระหว่าง 2 vectors"""
+    va = np.array(a, dtype=np.float32)
+    vb = np.array(b, dtype=np.float32)
+    norm = np.linalg.norm(va) * np.linalg.norm(vb)
+    return float(np.dot(va, vb) / norm) if norm > 0 else 0.0
+
+
+def extract_key_sections(resume_text: str, base64_image: str) -> str:
+    """
+    ใช้ Vision Model สกัด key sections จากเรซูเม่
+    → ได้ข้อความที่ focused สำหรับการ embed
+    """
+    prompt = """จากเรซูเม่/CV ในรูปภาพและข้อความที่ให้มา ให้สกัดเฉพาะส่วนต่อไปนี้:
+
+1. ชื่อตำแหน่งงานปัจจุบัน หรือล่าสุด
+2. ทักษะเทคนิค (Technical Skills, Programming Languages, Tools, Frameworks)
+3. ชื่อตำแหน่งงานทั้งหมดที่เคยทำ
+4. สาขาวิชาที่จบการศึกษา
+5. Career Summary หรือ Objective (ถ้ามี)
+6. Certifications หรือใบรับรองวิชาชีพ (ถ้ามี)
+
+ตอบในรูปแบบ plain text รวมทุกส่วนเป็นประโยคเดียวกัน ไม่ต้องมี header ไม่ต้องอธิบาย ให้เฉพาะข้อมูลที่สกัดได้เท่านั้น"""
+
+    response = client.chat.completions.create(
+        model="meta-llama/llama-4-scout-17b-16e-instruct",
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": f"{prompt}\n\nOCR Text:\n{resume_text[:2000]}"},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}},
+            ]
+        }],
+        temperature=0.1,
+        max_tokens=500,
+    )
+    return response.choices[0].message.content.strip()
+
+
+def get_embedding(text: str) -> list[float]:
+    """เรียก GROQ Embedding API"""
+    response = client.embeddings.create(
+        model=EMBED_MODEL,
+        input=text[:8000],  # nomic-embed-text รองรับสูงสุด 8192 tokens
+    )
+    return response.data[0].embedding
+
+
+def rank_jobs_by_similarity(resume_embedding: list[float], top_k: int = 5) -> list[str]:
+    """จัดอันดับ job roles โดย cosine similarity"""
+    scores = {
+        role: cosine_similarity(resume_embedding, emb)
+        for role, emb in job_embeddings.items()
+    }
+    ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    return [role for role, _ in ranked[:top_k]]
 
 
 class ChatRequest(BaseModel):
@@ -102,76 +265,45 @@ def root():
     return {"status": "ok"}
 
 # =========================
-# RECOMMEND JOB BY CV
+# RECOMMEND JOB BY CV  (Semantic Embedding)
 # =========================
 
 @app.post("/recommend/cv")
 async def recommend_job_by_cv(resume_file: UploadFile = File(...)):
-    global conversation_history
+    try:
+        # ── Step 1: OCR ────────────────────────────────────────────────
+        resume_file.file.seek(0)
+        resume_text = extract_text(resume_file)
 
-    resume_file.file.seek(0)
-    resume_text = extract_text(resume_file)
+        # ── Step 2: Base64 สำหรับ Vision Model ────────────────────────
+        resume_file.file.seek(0)
+        base64_image = file_to_base64(resume_file)
 
-    resume_file.file.seek(0)
-    base64_image = file_to_base64(resume_file)
+        # ── Step 3: Vision Model สกัด key sections ────────────────────
+        key_sections = extract_key_sections(resume_text, base64_image)
 
-    prompt = """📝 ขั้นตอนการวิเคราะห์:
+        # ── Step 4: รวม OCR + key sections เพื่อ embed ─────────────────
+        # ใช้ key_sections เป็นหลัก + บาง OCR เสริม context
+        embed_text = f"{key_sections}\n\n{resume_text[:1000]}"
 
-อ่านเรซูเม่/CV ที่ให้มาอย่างละเอียด
-แยกข้อความเรซูเม่ออกเป็นหน่วยคำ (tokenization) และทำความสะอาดข้อความ (lowercase, remove stopwords, normalize)
-คำนวณน้ำหนักของทุกคำสำคัญด้วยหลัก TF-IDF โดย:
-TF (Term Frequency): คำที่ปรากฏบ่อยในเรซูเม่มีค่าสูง
-IDF (Inverse Document Frequency): คำเฉพาะทางมีค่าสูงกว่าคำทั่วไป
-ปรับน้ำหนัก TF-IDF เพิ่มตามบริบทตำแหน่งที่พบคำ:
-คำที่อยู่ในหัวข้อ Skills, Summary, Job Title, Certifications, Education ให้ค่าน้ำหนักเพิ่ม
-คำที่อยู่ในเนื้อหาประสบการณ์งานให้ค่าน้ำหนักปานกลาง
-รวมคำที่มีความหมายใกล้เคียงกัน (เช่น Python Developer, Python Programming → Python)
-จัดอันดับ Keyword ตามค่าน้ำหนัก TF-IDF ที่ได้
-นำ Keyword ที่มีค่าน้ำหนักสูงสุดไปจับคู่กับตำแหน่งงานที่สอดคล้องมากที่สุด
-อนุญาตให้ชื่อตำแหน่งงานซ้ำกันได้ หาก TF-IDF บ่งชี้ว่าตรงกับงานนั้นมากที่สุด
-อันดับเรียงจากความสอดคล้องสูงสุดไปต่ำสุด
+        # ── Step 5: Semantic Embedding ─────────────────────────────────
+        resume_embedding = get_embedding(embed_text)
 
-⚠️ รูปแบบการตอบ:
+        # ── Step 6: Cosine Similarity → Top 5 ─────────────────────────
+        top_jobs = rank_jobs_by_similarity(resume_embedding, top_k=5)
 
-ตอบเฉพาะชื่อตำแหน่งงาน 5 อันดับเท่านั้น
-คั่นด้วยเครื่องหมายจุลภาค (,)
-ห้ามอธิบาย ห้ามใส่หมายเลข ห้ามใส่ข้อความอื่นใดทั้งสิ้น
-ตัวอย่างรูปแบบ: Data Analyst,Python Developer,Business Intelligence,Data Engineer,Machine Learning Engineer"""
+        return JSONResponse({
+            "reply": ",".join(top_jobs),
+            "jobs":  top_jobs,
+        })
 
-    answer = client.chat.completions.create(
-        model="meta-llama/llama-4-scout-17b-16e-instruct",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "คุณคือ HR AI Analyzer ที่เชี่ยวชาญการวิเคราะห์ Keyword จากเรซูเม่ "
-                    "และจับคู่กับตำแหน่งงานที่เหมาะสมที่สุดตามน้ำหนักของ Keyword"
-                )
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": f"{prompt}\n\nResume Text:\n{resume_text}"},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
-                    },
-                ],
-            },
-        ],
-        temperature=0.1,
-        max_tokens=200,
-    )
-
-    response = answer.choices[0].message.content.strip()
-    jobs = [j.strip() for j in response.split(",") if j.strip()]
-    jobs = jobs[:5]
-
-    return JSONResponse({"reply": ",".join(jobs), "jobs": jobs})
+    except Exception as e:
+        print("RECOMMEND ERROR:", e)
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 # =========================
-# MATCH
+# MATCH  (ไม่เปลี่ยน)
 # =========================
 
 @app.options("/match")
@@ -190,16 +322,11 @@ async def match(
         content_type = resume_file.content_type
 
         if content_type == "application/pdf":
-            images = convert_from_bytes(file_bytes, dpi=300)  # ✅ ลบ poppler_path ออก
-
+            images = convert_from_bytes(file_bytes, dpi=300, poppler_path=POPPLER_PATH)
         elif content_type in ["image/jpeg", "image/png", "image/jpg"]:
             images = [Image.open(BytesIO(file_bytes))]
-
         else:
-            return JSONResponse(
-                {"error": f"Unsupported file type: {content_type}"},
-                status_code=400
-            )
+            return JSONResponse({"error": f"Unsupported file type: {content_type}"}, status_code=400)
 
         images_base64 = []
         for img in images:
@@ -221,14 +348,11 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 [สายไอที]
 ระบุ: Tech Stack + โปรเจกต์พร้อมผลลัพธ์ + Certifications (AWS/Microsoft/Google Cloud)
 การแบ่งสาย — JD ระบุสายใด ผู้สมัครต้องมีทักษะตรงสายนั้น:
-- Mobile: iOS (Swift/Objective-C) / Android (Kotlin/Java) / Cross-platform (Flutter/React Native)
-  → Web Developer ที่ไม่มีประสบการณ์ Mobile = ไม่เหมาะสม
-  → React Native Developer สมัคร Flutter = ปรับปรุงเพิ่ม (ทักษะใกล้เคียง)
+- Mobile: iOS (Swift/Objective-C) / Android (Kotlin/Java) / Cross-platform (Flutter/React Native) → Web Developer ที่ไม่มีประสบการณ์ Mobile = ไม่เหมาะสม | React Native Developer สมัคร Flutter = ควรพิจารณา
 - Frontend: React / Vue / Angular / HTML/CSS
 - Backend: Node.js / Python / Java / Go / PHP
 - Fullstack: ต้องมีทั้ง Frontend + Backend
-- Data/AI/ML: Python + SQL + ML Framework (TensorFlow/PyTorch) + Data Pipeline
-  → Web Dev ที่ไม่มีประสบการณ์ Data = ไม่เหมาะสม
+- Data/AI/ML: Python + SQL + ML Framework (TensorFlow/PyTorch) + Data Pipeline → Web Dev ที่ไม่มีประสบการณ์ Data = ไม่เหมาะสม
 - DevOps/Cloud: Docker / Kubernetes / CI/CD / AWS / Azure / GCP
 - Cybersecurity: Penetration Testing / SIEM / Firewall / CEH/CISSP
 - Database Admin: SQL/NoSQL + Performance Tuning + Backup/Recovery
@@ -236,151 +360,58 @@ Soft Skills ที่ HR สำคัญ: Communication | Collaboration | Decisi
 
 [สายช่าง/วิศวกรรม]
 ระบุ: เครื่องมือ + โครงการ + ขนาดงาน + ใบรับรองความปลอดภัย + ใบอนุญาตประกอบวิชาชีพ (กว.)
-การแบ่งสาย — คนละสายถือว่าไม่เหมาะสมทันที:
-- วิศวกรรมโยธา (Civil): โครงสร้าง / ถนน / สะพาน / AutoCAD / ใบ กว.โยธา
-- วิศวกรรมไฟฟ้า (Electrical): ระบบไฟฟ้า / PLC / ใบ กว.ไฟฟ้า
-- วิศวกรรมเครื่องกล (Mechanical): ระบบเครื่องจักร / HVAC / SolidWorks / ใบ กว.เครื่องกล
-- วิศวกรรมเคมี (Chemical): กระบวนการผลิต / ความปลอดภัยสารเคมี / ISO
-- วิศวกรรมคอมพิวเตอร์ (Computer): Hardware + Embedded System + FPGA
-  → ไม่ใช่ Software/IT ล้วน → ต้องมีทักษะ Hardware/Embedded
-- วิศวกรรมอุตสาหการ (Industrial/IE): Lean / Six Sigma / Production Planning / ERP
-- ช่างไฟฟ้า: ระบบไฟฟ้า / ใบอนุญาตช่างไฟฟ้า
-  → ช่างไม้ / ช่างประปา / ช่างเชื่อม สมัครงานช่างไฟฟ้า = ไม่เหมาะสมทันที
-- ช่างเครื่องกล/ยนต์: เครื่องยนต์ / ระบบส่งกำลัง
-- ช่างโยธา/ก่อสร้าง: งานก่อสร้าง / ประมาณราคา / ควบคุมงาน
-- ช่างเชื่อม: AWS/TIG/MIG Welding Certification
-- ช่างประปา: ระบบท่อ / ใบอนุญาตประปา
+- วิศวกรรมโยธา: โครงสร้าง/ถนน/สะพาน/AutoCAD/ใบ กว.โยธา
+- วิศวกรรมไฟฟ้า: ระบบไฟฟ้า/PLC/ใบ กว.ไฟฟ้า
+- วิศวกรรมเครื่องกล: HVAC/SolidWorks/ใบ กว.เครื่องกล
+- วิศวกรรมคอมพิวเตอร์: Hardware+Embedded System+FPGA → ไม่ใช่ Software/IT ล้วน
+- วิศวกรรมอุตสาหการ: Lean/Six Sigma/ERP
 → คนละสายงานชัดเจน = ไม่เหมาะสมทันที
 
 [สายวิทยาศาสตร์]
-ระบุ: งานวิจัย + ทักษะห้องแล็บ + ผลงานตีพิมพ์ + ใบรับรอง/ใบอนุญาตที่เกี่ยวข้องกับสาย
-การแบ่งสาย — คนละสาขาถือว่าไม่เหมาะสมทันที:
-- เคมี (Chemistry): Organic/Inorganic/Analytical Chem + เครื่อง HPLC/GC/MS
-- ชีววิทยา (Biology): Cell Biology / Genetics / Microbiology / PCR / Cell Culture
-- จุลชีววิทยา (Microbiology): เพาะเชื้อ / Sterility Testing / GMP
-- ชีวเคมี (Biochemistry): Protein Analysis / ELISA / Western Blot
-- ฟิสิกส์ (Physics): Optics / Semiconductor / Simulation
-- ธรณีวิทยา (Geology): GIS / Rock Analysis / Seismic Survey
-- พฤกษศาสตร์ (Botany): Plant Taxonomy / Tissue Culture / Herbarium
-- สิ่งแวดล้อม (Environmental Science): EIA / Water/Air Quality / ISO 14001
-→ เคมีสมัครงานชีววิทยา หรือ ธรณีวิทยาสมัครงานพฤกษศาสตร์ = ไม่เหมาะสมทันที
-→ ยกเว้น: สาขาที่ overlap กัน เช่น ชีวเคมี ↔ จุลชีววิทยา = ปรับปรุงเพิ่ม
+- เคมี: HPLC/GC/MS | ชีววิทยา: PCR/Cell Culture | จุลชีววิทยา: GMP | ชีวเคมี: ELISA | ฟิสิกส์: Semiconductor | ธรณีวิทยา: GIS | พฤกษศาสตร์: Tissue Culture | สิ่งแวดล้อม: EIA
+→ คนละสาขาชัดเจน = ไม่เหมาะสมทันที | ยกเว้น overlap เช่น ชีวเคมี ↔ จุลชีววิทยา = ควรพิจารณา
 
 [สายการแพทย์/สาธารณสุข]
-ระบุ: ใบประกอบวิชาชีพ + ประสบการณ์คลินิก + ทักษะเฉพาะทาง
-การแบ่งสาย — ใบประกอบวิชาชีพต้องตรงสาย ถ้าไม่มี = ไม่เหมาะสมทันที:
-- แพทย์ (MD): ใบประกอบวิชาชีพเวชกรรม + สาขาเฉพาะทาง (ถ้า JD ระบุ)
-- พยาบาล (RN): ใบประกอบวิชาชีพพยาบาล
-- เภสัชกร: ใบประกอบวิชาชีพเภสัชกรรม
-- กายภาพบำบัด: ใบประกอบวิชาชีพกายภาพบำบัด
-- เทคนิคการแพทย์: ใบประกอบวิชาชีพเทคนิคการแพทย์
-- นักรังสีการแพทย์: ใบประกอบวิชาชีพรังสีเทคนิค
-- ทันตแพทย์: ใบประกอบวิชาชีพทันตกรรม
-→ พยาบาลสมัครงานเภสัชกร หรือ เทคนิคการแพทย์สมัครงานกายภาพ = ไม่เหมาะสมทันที
+ใบประกอบวิชาชีพต้องตรงสาย ถ้าไม่มี = ไม่เหมาะสมทันที
 
 [สายกฎหมาย]
-ระบุ: ใบอนุญาตทนายความ + ประสบการณ์คดี/สัญญา + สาขากฎหมายที่เชี่ยวชาญ
-การแบ่งสาย:
-- ทนายความ: ใบอนุญาตทนายความ + ประสบการณ์คดีที่ตรงสาย (แพ่ง/อาญา/แรงงาน/ทรัพย์สินทางปัญญา)
-- นิติกร (ภาครัฐ/เอกชน): วุฒิการศึกษานิติศาสตร์ + ร่างสัญญา/กฎระเบียบ
-- Compliance/Legal Counsel: กฎหมายธุรกิจ + กฎระเบียบที่เกี่ยวข้องกับอุตสาหกรรม (เช่น PDPA/SEC/BOT)
-→ ทนายคดีอาญาสมัครงาน IP Lawyer = ปรับปรุงเพิ่ม (ต้องมีประสบการณ์ IP)
-→ ผู้ไม่มีวุฒินิติศาสตร์/ใบอนุญาตสมัครงานที่กำหนด = ไม่เหมาะสมทันที
+ใบอนุญาตทนายความ/วุฒินิติศาสตร์ต้องตรงสาย
 
 [สายการเงิน]
-ระบุ: ใบรับรอง (CFA/CPA/CISA/FRM) + ประสบการณ์ตรงสาย + เครื่องมือ (Bloomberg/SAP/Excel)
-การแบ่งสาย:
-- นักวิเคราะห์การเงิน (Financial Analyst): Financial Modeling + Valuation + CFA
-- ผู้สอบบัญชี (Auditor/CPA): ใบ CPA + ประสบการณ์ตรวจสอบ
-- บริหารความเสี่ยง (Risk): FRM + Basel/IFRS + Stress Testing
-- Trader/Investment: CFA/CISA + ประสบการณ์ตลาดทุน
-- Corporate Finance: M&A / Capital Structure / Fundraising
-→ Auditor สมัครงาน Trader = ไม่เหมาะสม (ทักษะต่างกันมาก)
-→ Financial Analyst สมัครงาน Corporate Finance = ปรับปรุงเพิ่ม (ทักษะใกล้เคียง)
+- Financial Analyst: CFA | Auditor: CPA | Risk: FRM | Trader: CFA/CISA | Corporate Finance: M&A
+→ Auditor สมัคร Trader = ไม่เหมาะสม | Financial Analyst สมัคร Corporate Finance = ควรพิจารณา
 
 [สายครีเอทีฟ/ดีไซน์]
-ระบุ: Portfolio + ซอฟต์แวร์ที่ใช้ + ระดับความเชี่ยวชาญ + ประเภทงาน
-การแบ่งสาย:
-- Graphic Design: Adobe Illustrator/Photoshop + Print/Digital Design
-- UX/UI Design: Figma/Sketch + User Research + Prototype + Wireframe
-  → Graphic Designer ที่ไม่มีประสบการณ์ UX Research = ปรับปรุงเพิ่ม
-- Motion Graphics/Video: After Effects/Premiere Pro + Animation
-- Photography/Videography: กล้อง + Post-production + ประเภทงาน (Commercial/Fashion/Event)
-- Industrial/Product Design: SolidWorks/Rhino + ต้นแบบผลิตภัณฑ์
-→ Graphic Designer สมัครงาน UX/UI = ปรับปรุงเพิ่ม (ถ้ามีทักษะ Prototype/Wireframe)
-→ Graphic Designer สมัครงาน Industrial Design = ไม่เหมาะสม (คนละสายงาน)
+- Graphic: Illustrator/Photoshop | UX/UI: Figma+User Research | Motion: After Effects | Industrial: SolidWorks/Rhino
+→ Graphic Designer สมัคร UX/UI = ควรพิจารณา (ถ้ามี Prototype) | สมัคร Industrial Design = ไม่เหมาะสม
 
 [สายการตลาด]
-ระบุ: ตัวเลข Campaign + ROI + เครื่องมือ (Google Analytics/Meta Ads/SEO) + ประสบการณ์ข้ามทีม
-การแบ่งสาย:
-- Digital Marketing: SEO/SEM + Google Ads/Meta Ads + Analytics
-- Brand Marketing: Brand Strategy + Consumer Insight + ATL/BTL
-- Content Marketing: Content Strategy + Copywriting + SEO Content
-- CRM/Loyalty: Customer Data + Segmentation + Email Marketing
-- Trade Marketing: In-store + Merchandising + Channel Management
-→ Digital Marketing สมัครงาน Trade Marketing = ปรับปรุงเพิ่ม (ทักษะต่างกัน)
-→ Content Writer สมัครงาน Performance Marketing = ไม่เหมาะสม (ขาดทักษะ Paid Media)
+- Digital: SEO/SEM/Analytics | Brand: ATL/BTL | Content: Copywriting | CRM: Segmentation | Trade: In-store
+→ Content Writer สมัคร Performance Marketing = ไม่เหมาะสม
 
 [สายคอนเทนต์]
-ระบุ: ตัวเลขผลลัพธ์ (Engagement/Growth Rate/Views) + ประเภทคอนเทนต์ที่ถนัด
-การแบ่งสาย:
-- Social Media Content: Platform-specific (TikTok/Instagram/YouTube) + Trend Awareness
-- Copywriter: Long-form/Short-form + SEO Writing + Brand Voice
-- Technical Writer: เอกสารเทคนิค + API Docs + Manual
-- Script Writer: บทพูด/บทวิดีโอ + Storytelling
-→ Copywriter สมัครงาน Technical Writer = ปรับปรุงเพิ่ม (ต้องมีความรู้เทคนิค)
-→ Social Media Content Creator สมัครงาน Technical Writer = ไม่เหมาะสม
+- Social Media/Copywriter/Technical Writer/Script Writer
+→ Social Media Creator สมัคร Technical Writer = ไม่เหมาะสม
 
 [สายภาษา]
-ระบุ: ระดับความสามารถแยกทักษะ + ผลสอบ (TOEIC/IELTS/JLPT/HSK) + ประเภทงาน
-การแบ่งสาย:
-- ล่าม (Interpreter): Simultaneous/Consecutive Interpreting + ความเชี่ยวชาญสาขา (กฎหมาย/การแพทย์/ธุรกิจ)
-- นักแปล (Translator): ประเภทเอกสาร (เทคนิค/วรรณกรรม/กฎหมาย/การแพทย์)
-- ครูสอนภาษา: วุฒิการศึกษา + ใบรับรองการสอน (TEFL/TESOL/CELTA)
-→ นักแปลเอกสารทั่วไปสมัครงานล่ามการแพทย์ = ปรับปรุงเพิ่ม (ต้องมีความรู้การแพทย์)
-→ ครูสอนภาษาสมัครงานนักแปลเอกสารกฎหมาย = ไม่เหมาะสม (ขาดทักษะการแปลเฉพาะทาง)
+ล่าม/นักแปล/ครูสอนภาษา + ผลสอบ TOEIC/IELTS/JLPT/HSK
 
-[สายบัญชี]
-ระบุ: ซอฟต์แวร์ (SAP/Express/QuickBooks) + ใบรับรอง (CPA/CPD) + มูลค่างบที่ดูแล + ประสบการณ์ภาษี
-
-[สายการบิน]
-ระบุ: Soft Skills + ภาษา (TOEIC 550+) + ใบรับรองความปลอดภัย + ส่วนสูง/น้ำหนัก (ระบุในเรซูเม่)
+[สายบัญชี] SAP/Express + CPA/CPD + มูลค่าบัญชี + ประสบการณ์ภาษี
+[สายการบิน] Soft Skills + TOEIC 550+ + ใบรับรองความปลอดภัย + ส่วนสูง/น้ำหนัก
 
 Career Summary ที่ดี: (1) ตำแหน่ง/ระดับประสบการณ์ (2) ทักษะ/ความสำเร็จที่เกี่ยวข้อง (3) เป้าหมายอาชีพ
 
-=== Hard Disqualifier — ไม่เหมาะสมทันที ===
-วุฒิการศึกษา:
+=== Hard Disqualifier ===
 - JD Require ป.โท → ป.ตรีหรือต่ำกว่า = ไม่ผ่าน
 - JD Require ป.เอก → ต่ำกว่า ป.เอก = ไม่ผ่าน
 - JD Require สาขาเฉพาะ → จบสาขาอื่น = ไม่ผ่าน (ยกเว้นมีประสบการณ์/ใบรับรองชดเชย)
-- JD Require ม.ปลาย/ปวช./ปวส.:
-  → วุฒิต่ำกว่า = ไม่ผ่าน | วุฒิเท่ากัน = ผ่าน | วุฒิสูงกว่า (ป.ตรีขึ้นไป) = ผ่าน แต่แนะนำหางานที่ตรงวุฒิมากกว่าเพื่อโอกาสและค่าตอบแทนที่ดีกว่า
-
-ประสบการณ์:
-- JD Require ขั้นต่ำ (เช่น 3-5 ปี) → ไม่มีหรือน้อยกว่า = ไม่ผ่าน
-- JD รับ Fresh Graduate / ไม่ Require ประสบการณ์:
-  → ไม่มีประสบการณ์ = ผ่าน ทักษะถือเป็นข้อดีเสริม
-  → มีประสบการณ์มากกว่า = ผ่าน แต่แนะนำหางานที่ Require ประสบการณ์สูงกว่าเพื่อโอกาสที่ดีกว่า
-
-อายุ:
-- JD ระบุช่วงอายุ → อายุไม่ตรง = ไม่ผ่าน
-- เรซูเม่ไม่ระบุอายุแต่ JD กำหนด → แจ้งให้ระบุอายุ
-
-เพศ:
-- JD ระบุเพศ → เพศไม่ตรง = ไม่ผ่าน
-- เรซูเม่ไม่ระบุเพศแต่ JD กำหนด → แจ้งให้ระบุเพศ
-
-ใบประกอบวิชาชีพ/ใบอนุญาต:
-- JD Require ใบประกอบวิชาชีพ (แพทย์/พยาบาล/เภสัช/กายภาพ/ทันตแพทย์/ทนายความ/กว.) → ไม่มีใบ = ไม่ผ่านทันที
-
-สายงานไม่ตรง:
-- JD ระบุสายงานเฉพาะ (Mobile Dev / ช่างไฟฟ้า / เคมี / ทนายคดีอาญา ฯลฯ) → ผู้สมัครมีทักษะคนละสายชัดเจน = ไม่ผ่านทันที
-- ยกเว้น: สายงานที่ overlap หรือทักษะใกล้เคียง → ระบุว่า "ปรับปรุงเพิ่ม" พร้อมเหตุผล
-
-=== เกณฑ์วิเคราะห์ (3 มิติ) ===
-1. Job Relevance: ข้อมูลติดต่อ | อายุ/เพศตรง JD | Career Summary ตอบโจทย์ตำแหน่ง | เนื้อหาสอดคล้อง JD | ข้อมูลที่ไม่ควรมี
-2. Work Experience: ชื่อตำแหน่ง/บริษัท/ช่วงเวลาชัดเจน | ปีประสบการณ์ตาม JD | ผลงานตัวเลขวัดได้ | Active Words | หน้าที่เฉพาะเจาะจง | Reverse Chronological
-3. Skills & Education: วุฒิ/สาขาตาม JD | สายงานตรงตามที่ JD กำหนด | Hard Skills (มีและตรง/มีบางส่วน/ขาด) | Soft Skills | คำคุณศัพท์ลอย | Certifications | ใบประกอบวิชาชีพ (ถ้า JD กำหนด)
+- JD Require ม.ปลาย/ปวช./ปวส.: วุฒิต่ำกว่า = ไม่ผ่าน | เท่ากัน = ผ่าน | สูงกว่า = ผ่าน แต่แนะนำหางานที่ตรงวุฒิมากกว่า
+- JD Require ประสบการณ์ขั้นต่ำ → น้อยกว่า = ไม่ผ่าน
+- JD รับ Fresh Graduate: ไม่มีประสบการณ์ = ผ่าน | มีมากกว่า = ผ่าน แต่แนะนำหางานที่ Require สูงกว่า
+- JD ระบุอายุ → ไม่ตรง = ไม่ผ่าน | ไม่ระบุอายุแต่ JD กำหนด = แจ้งให้ระบุ
+- JD ระบุเพศ → ไม่ตรง = ไม่ผ่าน
+- ใบประกอบวิชาชีพ (แพทย์/พยาบาล/เภสัช/กายภาพ/ทันตแพทย์/ทนายความ/กว.) → ไม่มี = ไม่ผ่านทันที
+- สายงานต่างกันชัดเจน → ไม่ผ่านทันที | Overlap → ควรพิจารณา
 
 === FORMAT (ตอบตามนี้เท่านั้น) ===
 
@@ -417,9 +448,8 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
 สิ่งที่ควรแก้ไขในส่วนทักษะ: ...
 
 [SUMMARY]
-ความเหมาะสม: ✅ ตรงเกณฑ์ / ⚠️ ปรับปรุงเพิ่ม / ❌ ไม่เหมาะสม
-📌 เหตุผล: ...
-(ไม่ต้องสรุปภาพรวม)"""
+ความเหมาะสม: ✅ เหมาะสม / ⚠️ ควรพิจารณา / ❌ ไม่เหมาะสม
+📌 เหตุผล: ..."""
 
         user_prompt = f"""กรุณาประเมินเรซูเม่ต่อไปนี้ตามเกณฑ์โดยเทียบกับรายละเอียดงานที่ให้ไว้
 
@@ -435,13 +465,7 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
                 "role": "user",
                 "content": [
                     {"type": "text", "text": user_prompt},
-                    *[
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/jpeg;base64,{img}"}
-                        }
-                        for img in images_base64
-                    ]
+                    *[{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img}"}} for img in images_base64]
                 ]
             }
         ]
@@ -450,7 +474,7 @@ Career Summary ที่ดี: (1) ตำแหน่ง/ระดับปร�
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=messages,
             temperature=0.2,
-            max_tokens=2500,  # ✅ เพิ่มจาก 2000
+            max_tokens=2500,
         )
 
         result = response.choices[0].message.content
